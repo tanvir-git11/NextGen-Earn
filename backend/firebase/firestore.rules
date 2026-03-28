@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ───────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // ── Users collection ───────────────────────────────────────────────────
+    match /users/{uid} {
+      // Users can read their own document
+      allow read: if isAuthenticated() && isOwner(uid);
+
+      // Only allow creation through the backend (Admin SDK bypasses these rules)
+      allow create: if false;
+
+      // Deny direct writes from client — all updates via backend
+      allow update, delete: if false;
+    }
+
+        // ── Plans collection ───────────────────────────────────────────────────
+    match /plans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // শুধুমাত্র ব্যাকএন্ড/এডমিন লিখতে পারবে
+    }
+
+    // ── Transactions collection ────────────────────────────────────────────
+    match /transactions/{txId} {
+      // Users can read their own transactions
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      // No client-side writes — all managed by backend
+      allow write: if false;
+    }
+
+    // ── Deposits collection ────────────────────────────────────────────────
+    match /deposits/{depositId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ── Withdraws collection ───────────────────────────────────────────────
+    match /withdraws/{withdrawId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+  }
+}

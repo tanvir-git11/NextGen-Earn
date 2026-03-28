@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>NextGen Earn – Referral Dashboard</title>
+  <meta name="description"
+    content="NextGen Earn referral MLM user panel – manage earnings, referrals, wallet and plans." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            neon: { green: '#00ff88', purple: '#a855f7', blue: '#3b82f6', pink: '#ec4899' }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-gray-950 text-white font-sans min-h-screen overflow-x-hidden">
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="fixed top-5 right-5 z-[9999] hidden max-w-xs w-full"></div>
+
+  <!-- ===== LOADING SPINNER ===== -->
+  <div id="loader" class="fixed inset-0 z-[9998] bg-gray-950/90 flex items-center justify-center hidden">
+    <div class="w-12 h-12 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+  </div>
+
+  <!-- ===== MODAL ===== -->
+  <div id="modal"
+    class="fixed inset-0 z-[9997] bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass rounded-2xl p-6 max-w-sm w-full">
+      <h3 id="modal-title" class="text-lg font-bold mb-2"></h3>
+      <p id="modal-body" class="text-gray-400 text-sm mb-5"></p>
+      <div class="flex gap-3">
+        <button id="modal-cancel" onclick="closeModal()"
+          class="flex-1 py-2 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-700 transition">Cancel</button>
+        <button id="modal-confirm"
+          class="flex-1 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-semibold transition neon-btn-purple">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AUTH SECTION ===== -->
+  <div id="auth-section" class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div class="auth-bg-animation absolute inset-0 -z-10"></div>
+    <div class="glass rounded-3xl p-8 w-full max-w-md relative z-10">
+      <div class="text-center mb-8">
+        <div
+          class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center text-2xl font-black">
+          N</div>
+        <h1 class="text-3xl font-extrabold gradient-text">NextGen Earn</h1>
+        <p class="text-gray-400 text-sm mt-1">Your referral income hub</p>
+      </div>
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6 bg-gray-800/60 rounded-xl p-1">
+        <button id="tab-login" onclick="switchAuthTab('login')"
+          class="flex-1 py-2 rounded-lg text-sm font-semibold transition tab-active">Login</button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')"
+          class="flex-1 py-2 rounded-lg text-sm font-semibold transition text-gray-400">Sign Up</button>
+      </div>
+      <!-- Login Form -->
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div class="input-group">
+          <label class="input-label">Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" class="input-field" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="relative">
+            <input type="password" id="login-password" placeholder="••••••••" class="input-field pr-12" required />
+            <button type="button" onclick="togglePwd('login-password','eye-login')"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
+              <svg id="eye-login" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary w-full mt-2">Login to Dashboard</button>
+      </form>
+      <!-- Signup Form -->
+      <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+        <div class="input-group">
+          <label class="input-label">Full Name</label>
+          <input type="text" id="signup-name" placeholder="John Doe" class="input-field" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Email Address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com" class="input-field" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="relative">
+            <input type="password" id="signup-password" placeholder="••••••••" class="input-field pr-12" required />
+            <button type="button" onclick="togglePwd('signup-password','eye-signup')"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition">
+              <svg id="eye-signup" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Confirm Password</label>
+          <input type="password" id="signup-confirm" placeholder="••••••••" class="input-field" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Referral Code <span class="text-gray-500">(optional)</span></label>
+          <input type="text" id="signup-ref" placeholder="REFCODE123" class="input-field" />
+        </div>
+        <button type="submit" class="btn-primary w-full mt-2">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== APP SECTION (post-login) ===== -->
+  <div id="app-section" class="hidden min-h-screen">
+
+    <!-- Mobile Sidebar Drawer (Off-canvas) -->
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black/60 z-[45] hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
+    <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 w-72 glass-dark border-r border-white/5 z-[50] p-6 transform -translate-x-full transition-transform duration-300 lg:hidden">
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center font-black text-lg">N</div>
+          <span class="text-xl font-extrabold gradient-text">NextGen Earn</span>
+        </div>
+        <button onclick="toggleSidebar()" class="p-2 text-gray-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <nav class="space-y-2">
+        <a href="#" onclick="navigate('dashboard'); toggleSidebar()" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" onclick="navigate('spin'); toggleSidebar()" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2M5 12l7-7 7 7" />
+          </svg>
+          <span>Spin to Earn</span>
+        </a>
+        <a href="#" onclick="navigate('plans'); toggleSidebar()" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span>Plans</span>
+        </a>
+        <a href="#" onclick="navigate('refer'); toggleSidebar()" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span>Refer & Earn</span>
+        </a>
+        <a href="#" onclick="navigate('wallet'); toggleSidebar()" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span>Wallet</span>
+        </a>
+        <div class="pt-4 mt-4 border-t border-white/5">
+          <button onclick="handleLogout()" class="nav-item text-red-400 hover:text-red-300 w-full text-left">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Desktop Sidebar -->
+    <aside id="sidebar"
+      class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 glass-dark border-r border-white/5 z-40 p-6">
+      <div class="flex items-center gap-3 mb-10">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center font-black text-lg">
+          N</div>
+        <span class="text-xl font-extrabold gradient-text">NextGen Earn</span>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a href="#" onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active-nav">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" onclick="navigate('plans')" id="nav-plans" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span>Plans</span>
+        </a>
+        <a href="#" onclick="navigate('refer')" id="nav-refer" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
+          </svg>
+          <span>Refer</span>
+        </a>
+        <a href="#" onclick="navigate('wallet')" id="nav-wallet" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span>Wallet</span>
+        </a>
+        <a href="#" onclick="navigate('profile')" id="nav-profile" class="nav-item">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span>Profile</span>
+        </a>
+      </nav>
+      <button onclick="handleLogout()" class="nav-item text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-4">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Logout</span>
+      </button>
+    </aside>
+
+    <!-- Main content wrapper -->
+    <div class="lg:ml-64 flex flex-col min-h-screen pb-20 lg:pb-0">
+
+      <!-- Top Header -->
+      <header
+        class="sticky top-0 z-30 glass-dark border-b border-white/5 px-4 lg:px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <!-- Mobile Menu Toggle -->
+          <button id="menu-toggle" class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition" onclick="toggleSidebar()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div>
+            <h2 id="page-title" class="text-lg font-bold">Dashboard</h2>
+            <p class="text-xs text-gray-400" id="page-subtitle">Welcome back 👋</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center p-[2px] cursor-pointer hover:scale-110 transition shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+            onclick="navigate('profile')" title="Profile">
+            <div class="w-full h-full bg-gray-900 rounded-full flex items-center justify-center text-gray-300">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 px-4 lg:px-8 py-6 space-y-6">
+
+        <!-- ===== DASHBOARD PAGE ===== -->
+        <div id="page-dashboard" class="page-content space-y-5">
+          <!-- Welcome -->
+          <div class="glass rounded-2xl p-5 flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-green-400 flex items-center justify-center p-[2px] flex-shrink-0">
+              <div class="w-full h-full bg-gray-900 rounded-full flex items-center justify-center text-gray-300">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold">Hi, <span class="user-name">...</span>! 👋</h3>
+              <p class="text-gray-400 text-sm" id="dashboard-referrer-info">Keep growing your referral network</p>
+            </div>
+          </div>
+          <!-- Balance + Plan Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="glass rounded-2xl p-5 glow-card-purple">
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">Total Balance</p>
+              <p class="text-3xl font-extrabold gradient-text" id="balance-counter">৳0</p>
+              <p class="text-gray-500 text-xs mt-1">Available: <span class="text-green-400 user-balance">৳0</span></p>
+            </div>
+            <div class="glass rounded-2xl p-5 glow-card-green">
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">Active Plan</p>
+              <p class="text-2xl font-extrabold text-green-400 user-plan">No Plan</p>
+              <p class="text-gray-400 text-sm mt-1">Buy a plan to earn commissions</p>
+            </div>
+          </div>
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass rounded-2xl p-4 text-center stat-card">
+              <p class="text-2xl font-extrabold text-purple-400" id="stat-refs">0</p>
+              <p class="text-gray-400 text-xs mt-1">Team Members</p>
+            </div>
+            <div class="glass rounded-2xl p-4 text-center stat-card">
+              <p class="text-2xl font-extrabold text-green-400" id="stat-active">0</p>
+              <p class="text-gray-400 text-xs mt-1">Active Partners</p>
+            </div>
+            <div class="glass rounded-2xl p-4 text-center stat-card">
+              <p class="text-2xl font-extrabold text-blue-400" id="stat-earn">৳0</p>
+              <p class="text-gray-400 text-xs mt-1">Total Earned</p>
+            </div>
+            <div class="glass rounded-2xl p-4 text-center stat-card">
+              <p class="text-2xl font-extrabold text-pink-400" id="stat-withdraw">৳0</p>
+              <p class="text-gray-400 text-xs mt-1">Withdrawn</p>
+            </div>
+          </div>
+          <!-- Recent Activity -->
+          <div class="glass rounded-2xl p-5">
+            <h4 class="font-semibold mb-4 flex items-center gap-2"><span
+                class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span> Recent Activity</h4>
+            <div class="space-y-3" id="activity-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PLANS PAGE ===== -->
+        <div id="page-plans" class="page-content hidden space-y-5">
+          <p class="text-gray-400 text-sm" id="plans-subtitle">Choose a plan or upgrade your level to boost your
+            earnings.</p>
+
+          <!-- Starter Plan Card (shown if no plan) -->
+          <div class="max-w-md mx-auto" id="starter-plan-card" style="display: none;">
+            <div
+              class="glass rounded-2xl p-6 border border-purple-500/60 glow-card-purple hover:-translate-y-1 transition-all plan-card relative overflow-hidden">
+              <div class="absolute top-4 right-4 bg-purple-600 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                💎 Standard</div>
+              <div class="text-center mb-5">
+                <span class="text-xs bg-purple-900/60 text-purple-300 px-3 py-1 rounded-full">NextGen Plan</span>
+                <p class="text-4xl font-extrabold mt-3 text-purple-300">৳1,000</p>
+                <p class="text-gray-400 text-sm">One-time investment</p>
+              </div>
+              <div class="space-y-2 mb-6">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3">Commission</p>
+                <div class="flex justify-between text-sm"><span class="text-gray-300">Direct Referral</span><span
+                    class="text-purple-400 font-semibold">50% (৳500)</span></div>
+              </div>
+              <ul class="text-sm text-gray-400 space-y-2 mb-6">
+                <li class="flex items-center gap-2"><span class="text-purple-400">✓</span> Unlock withdrawals (after 5
+                  refs)</li>
+                <li class="flex items-center gap-2"><span class="text-purple-400">✓</span> Instant 50% commission</li>
+                <li class="flex items-center gap-2"><span class="text-purple-400">✓</span> Up to 5 Levels of Progression
+                </li>
+              </ul>
+              <button onclick="buyPlan(1000)"
+                class="btn-primary w-full shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_4px_25px_rgba(168,85,247,0.6)]">Activate
+                Plan</button>
+            </div>
+          </div>
+
+          <!-- Level Upgrade Card (shown if plan > 0) -->
+          <div class="max-w-md mx-auto" id="level-upgrade-card" style="display: none;">
+            <div class="glass rounded-2xl p-6 border border-blue-500/60 glow-card-blue relative overflow-hidden">
+              <div class="absolute top-4 right-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-semibold"
+                id="lvl-badge">Level 1</div>
+
+              <div class="text-center mb-5">
+                <span class="text-xs bg-blue-900/60 text-blue-300 px-3 py-1 rounded-full transition-colors"
+                  id="upgrade-status-badge">In Progress</span>
+                <p class="text-3xl font-extrabold mt-3 text-white" id="upgrade-title">Next Level</p>
+
+                <!-- Hidden until max capacity reached -->
+                <div id="upgrade-fee-section" class="hidden mt-4">
+                  <p class="text-4xl font-extrabold text-blue-300" id="upgrade-fee">৳1,500</p>
+                  <p class="text-gray-400 text-sm mt-1 text-blue-200" id="upgrade-desc">Fee to reach Level 2</p>
+                </div>
+              </div>
+
+              <div class="glass p-4 rounded-xl mb-4 bg-gray-900/50 border border-white/5">
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-gray-400">Active Referrals</span>
+                  <span class="text-white font-bold"><span id="current-refs-count">0</span> / <span
+                      id="max-refs-count">5</span></span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-2.5 mb-2 overflow-hidden">
+                  <div
+                    class="bg-gradient-to-r from-blue-500 to-green-400 h-2.5 rounded-full transition-all duration-700"
+                    id="refs-progress-bar" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-orange-400 text-center mt-3 hidden font-semibold bg-orange-500/10 p-2 rounded"
+                  id="upgrade-warning-text">⚠️ Target reached! Upgrade now to continue.</p>
+              </div>
+
+              <div id="upgrade-benefits" class="mb-6">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3">Level Up Benefits</p>
+                <ul class="text-sm text-gray-400 space-y-2" id="benefits-list">
+                  <li class="flex items-center gap-2"><span class="text-blue-400">✓</span> Unlock Lifetime Withdrawals
+                  </li>
+                  <li class="flex items-center gap-2"><span class="text-blue-400">✓</span> Expanded Referral Limits</li>
+                </ul>
+              </div>
+
+              <!-- Hidden until max capacity reached -->
+              <button onclick="upgradeLevel()"
+                class="btn-primary w-full shadow-[0_4px_20px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_25px_rgba(59,130,246,0.5)] hidden"
+                id="btn-upgrade-level">Upgrade Level</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== REFER PAGE ===== -->
+        <div id="page-refer" class="page-content hidden space-y-5">
+
+          <!-- Locked State -->
+          <div id="no-plan-alert"
+            class="glass rounded-2xl p-8 text-center glow-card-purple hidden border border-purple-500/30 mt-10">
+            <div
+              class="w-20 h-20 rounded-full bg-purple-900/40 flex items-center justify-center text-4xl mx-auto mb-4 border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+              🔒</div>
+            <h3 class="text-2xl font-extrabold mb-2 text-white">Referrals Locked</h3>
+            <p class="text-gray-400 text-sm mb-6 max-w-sm mx-auto">You need an active investment plan to unlock your
+              referral link and start earning up to 5 levels of commission!</p>
+            <button onclick="navigate('plans')"
+              class="btn-primary py-3 px-8 text-base shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_4px_25px_rgba(168,85,247,0.6)]">View
+              Investment Plans</button>
+          </div>
+
+          <div id="referral-content" class="space-y-5">
+            <!-- Invited By -->
+            <div class="glass rounded-2xl p-5 border border-purple-500/20" id="referrer-info">
+              <h4 class="font-semibold mb-4 flex items-center gap-2 text-purple-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Invited By
+              </h4>
+              <div id="referrer-details" class="flex items-center gap-4">
+                <p class="text-gray-400 text-sm">Loading...</p>
+              </div>
+            </div>
+
+            <!-- Referral Link -->
+            <div class="glass rounded-2xl p-5 glow-card-blue">
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-3 font-semibold">Your Referral Link</p>
+              <div class="flex gap-2">
+                <input id="ref-link" readonly value="https://nextgenearn.io/join?ref=JD2024X"
+                  class="input-field flex-1 text-sm bg-gray-800/60" />
+                <button onclick="copyRef()"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-semibold transition neon-btn-blue flex-shrink-0">Copy</button>
+              </div>
+            </div>
+            <!-- Stats -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div class="glass rounded-2xl p-4 text-center">
+                <p id="ref-total" class="text-2xl font-extrabold text-blue-400">0</p>
+                <p class="text-gray-400 text-xs mt-1">Team Members</p>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center">
+                <p id="ref-active" class="text-2xl font-extrabold text-green-400">0</p>
+                <p class="text-gray-400 text-xs mt-1">Active Partners</p>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center col-span-2 sm:col-span-1">
+                <p id="ref-earnings" class="text-2xl font-extrabold text-purple-400">৳0</p>
+                <p class="text-gray-400 text-xs mt-1">Ref Earnings</p>
+              </div>
+            </div>
+            <!-- Referral List -->
+            <div class="glass rounded-2xl p-5">
+              <h4 class="font-semibold mb-4">Your Referrals</h4>
+              <div class="space-y-3" id="referral-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== SPIN TO EARN PAGE ===== -->
+        <div id="page-spin" class="page-content hidden space-y-6">
+          <div class="glass rounded-2xl p-6 text-center space-y-4">
+            <h3 class="text-2xl font-bold gradient-text">Spin & Win! 🎡</h3>
+            <p class="text-gray-400 text-sm">Refer Active Partners to get more spins! Each active referral = 1 spin.</p>
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30">
+              <span class="text-purple-400 font-bold">Available Spins:</span>
+              <span id="spin-count-display" class="text-white font-black text-xl">0</span>
+            </div>
+          </div>
+
+          <!-- Spin Wheel Container -->
+          <div class="flex flex-col items-center justify-center py-10 relative">
+            <div id="wheel-container" class="relative w-72 h-72 sm:w-80 sm:h-80 rounded-full border-8 border-gray-800 shadow-[0_0_50px_rgba(168,85,247,0.3)] overflow-hidden transition-transform duration-[4s] cubic-bezier(0.15, 0, 0.15, 1)">
+              <!-- CSS Wheel Segments will be rendered here via style.css or JS if needed, but we'll use a CSS approach -->
+              <div id="wheel" class="w-full h-full relative">
+                <!-- Segments (10, 20, 30, 50, 100) -->
+                <div class="segment" style="--i:0; --bg:#8b5cf6;"><span>৳10</span></div>
+                <div class="segment" style="--i:1; --bg:#10b981;"><span>৳20</span></div>
+                <div class="segment" style="--i:2; --bg:#f59e0b;"><span>৳30</span></div>
+                <div class="segment" style="--i:3; --bg:#ef4444;"><span>৳50</span></div>
+                <div class="segment" style="--i:4; --bg:#3b82f6;"><span>৳100</span></div>
+                <!-- Duplicate for even distribution if needed, but user specified 5 prizes. Let's make 10 segments for better look (2 of each) -->
+                <div class="segment" style="--i:5; --bg:#8b5cf6;"><span>৳10</span></div>
+                <div class="segment" style="--i:6; --bg:#10b981;"><span>৳20</span></div>
+                <div class="segment" style="--i:7; --bg:#f59e0b;"><span>৳30</span></div>
+                <div class="segment" style="--i:8; --bg:#ef4444;"><span>৳50</span></div>
+                <div class="segment" style="--i:9; --bg:#3b82f6;"><span>৳100</span></div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-12 h-12 bg-white rounded-full shadow-lg z-10 flex items-center justify-center text-gray-900 font-bold border-4 border-gray-800">
+                  WIN
+                </div>
+              </div>
+            </div>
+            <!-- Marker -->
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 w-8 h-10 bg-yellow-400 clip-path-triangle z-20 shadow-lg"></div>
+            
+            <button id="spin-btn" onclick="handleSpin()" class="btn-primary mt-12 px-12 py-4 text-xl font-black rounded-2xl shadow-[0_10px_30px_rgba(168,85,247,0.5)] active:scale-95 transition">
+              SPIN NOW!
+            </button>
+          </div>
+
+          <!-- Recent Spin Rules Info -->
+          <div class="glass rounded-2xl p-5 border border-white/5">
+            <h4 class="font-semibold text-gray-300 mb-3">How it works?</h4>
+            <div class="space-y-3">
+              <div class="flex gap-3">
+                <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                <p class="text-xs text-gray-400">Refer a friend using your link.</p>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                <p class="text-xs text-gray-400">Friend activates a plan (Level 1).</p>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                <p class="text-xs text-gray-400">You get <span class="text-white font-bold">1 Free Spin</span> automatically!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== WALLET PAGE ===== -->
+        <div id="page-wallet" class="page-content hidden space-y-5">
+          <!-- Balance -->
+          <div class="glass rounded-2xl p-6 glow-card-purple text-center">
+            <p class="text-gray-400 text-sm mb-1">Total Balance</p>
+            <p class="text-4xl font-extrabold gradient-text user-balance">৳0</p>
+            <p class="text-gray-500 text-sm mt-1">Available: <span
+                class="text-green-400 font-semibold user-balance">৳0</span></p>
+          </div>
+          <!-- Action Buttons -->
+          <div class="grid grid-cols-2 gap-4">
+            <button onclick="navigate('deposit')"
+              class="btn-primary py-4 text-base flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg> Deposit
+            </button>
+            <button onclick="navigate('withdraw')"
+              class="btn-outline py-4 text-base flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg> Withdraw
+            </button>
+          </div>
+          <!-- Filter Tabs -->
+          <div class="glass rounded-2xl p-1 flex gap-1">
+            <button onclick="filterTx('all')" id="filter-all"
+              class="flex-1 py-2 rounded-xl text-sm font-medium transition tab-active">All</button>
+            <button onclick="filterTx('deposit')" id="filter-deposit"
+              class="flex-1 py-2 rounded-xl text-sm font-medium transition text-gray-400">Deposit</button>
+            <button onclick="filterTx('withdraw')" id="filter-withdraw"
+              class="flex-1 py-2 rounded-xl text-sm font-medium transition text-gray-400">Withdraw</button>
+            <button onclick="filterTx('commission')" id="filter-commission"
+              class="flex-1 py-2 rounded-xl text-sm font-medium transition text-gray-400 hidden sm:block">Commission</button>
+          </div>
+          <!-- Transaction List -->
+          <div class="space-y-3" id="tx-list"></div>
+        </div>
+
+        <!-- ===== DEPOSIT PAGE ===== -->
+        <div id="page-deposit" class="page-content hidden space-y-5">
+          <button onclick="navigate('wallet')"
+            class="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition">← Back to Wallet</button>
+          <div class="glass rounded-2xl p-5 border border-blue-500/30">
+            <h4 class="font-semibold text-blue-400 mb-2">Payment Instructions</h4>
+            <ul class="text-sm text-gray-400 space-y-2">
+              <li>1. Enter the amount you want to deposit.</li>
+              <li>2. Click "Pay Now" to proceed to the secure payment gateway.</li>
+              <li>3. Complete the payment using your preferred method (bKash/Nagad/Rocket).</li>
+              <li>4. Your balance will be credited automatically!</li>
+            </ul>
+          </div>
+          <form onsubmit="handleDeposit(event)" class="glass rounded-2xl p-5 space-y-4">
+            <div class="input-group">
+              <label class="input-label">Amount (BDT)</label>
+              <input type="number" id="dep-amount" placeholder="1000" min="100" class="input-field" required />
+            </div>
+            <button type="submit"
+              class="btn-primary w-full shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_4px_25px_rgba(168,85,247,0.6)]">Pay
+              Now</button>
+          </form>
+          <!-- Deposit History -->
+          <div class="glass rounded-2xl p-5">
+            <h4 class="font-semibold mb-4">Deposit History</h4>
+            <div class="space-y-3" id="deposit-history"></div>
+          </div>
+        </div>
+
+        <!-- ===== WITHDRAW PAGE ===== -->
+        <div id="page-withdraw" class="page-content hidden space-y-5">
+
+          <!-- Locked State -->
+          <div id="withdraw-locked-alert" class="glass rounded-2xl p-8 text-center hidden border border-red-500/30">
+            <div
+              class="w-16 h-16 rounded-full bg-red-900/40 flex items-center justify-center text-3xl mx-auto mb-4 border border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
+              🔒</div>
+            <h3 class="text-xl font-bold mb-2 text-white">Withdrawals Locked</h3>
+            <p class="text-gray-400 text-sm mb-6 max-w-sm mx-auto">You must reach <span
+                class="text-white font-bold">Level 2</span> to unlock the withdrawal feature. Complete your Level 1
+              referral target and upgrade your plan to continue.</p>
+            <button onclick="navigate('plans')"
+              class="px-6 py-2 border border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 transition rounded-xl text-sm font-semibold">Go
+              to Plans</button>
+          </div>
+
+          <div id="withdraw-form-container" class="space-y-5">
+            <!-- Balance Summary -->
+            <div class="glass rounded-2xl p-6 glow-card-pink relative overflow-hidden">
+              <div class="absolute -right-4 -bottom-4 opacity-20"><svg class="w-32 h-32 text-pink-500"
+                  fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg></div>
+              <p class="text-gray-400 text-sm font-medium">Available to Withdraw</p>
+              <p class="text-4xl font-extrabold mt-2 text-pink-400 user-balance">৳0</p>
+            </div>
+            <button onclick="navigate('wallet')"
+              class="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition">← Back to
+              Wallet</button>
+            <div class="glass rounded-2xl p-4 border border-yellow-500/30 flex items-start gap-3">
+              <span class="text-yellow-400 text-xl flex-shrink-0">⚠️</span>
+              <div>
+                <p class="text-yellow-300 text-sm font-semibold">Withdrawal Rules</p>
+                <p class="text-gray-400 text-xs mt-1">Minimum withdrawal: ৳100 | Processing time: 1-24 hours</p>
+              </div>
+            </div>
+            <form onsubmit="handleWithdraw(event)" class="glass rounded-2xl p-5 space-y-4">
+              <div class="input-group">
+                <label class="input-label">Amount (BDT)</label>
+                <input type="number" id="wd-amount" placeholder="500" min="100" class="input-field" required />
+              </div>
+              <div class="input-group">
+                <label class="input-label">Payment Method</label>
+                <select class="input-field" id="wd-method">
+                  <option value="bkash">Bkash</option>
+                  <option value="nagad">Nagad</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Account Number</label>
+                <input type="text" id="wd-account" placeholder="01XXXXXXXXX" class="input-field" required />
+              </div>
+              <button type="submit" class="btn-primary w-full">Submit Withdraw Request</button>
+            </form>
+            <!-- Withdraw History -->
+            <div class="glass rounded-2xl p-5">
+              <h4 class="font-semibold mb-4">Withdrawal History</h4>
+              <div class="space-y-3" id="withdraw-history">
+                <p class="text-center text-gray-500 text-sm py-4">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PROFILE PAGE ===== -->
+        <div id="page-profile" class="page-content hidden space-y-5">
+          <!-- User Info Header -->
+          <div class="glass rounded-2xl p-6 text-center glow-card-purple relative overflow-hidden">
+
+            <div
+              class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-green-400 p-[2px] mx-auto mb-4 relative z-10 shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+              <div class="w-full h-full bg-gray-900 rounded-full flex items-center justify-center text-gray-300">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+            </div>
+            <h3 class="text-3xl font-extrabold user-name relative z-10">...</h3>
+            <p class="text-gray-400 text-sm user-email relative z-10">...</p>
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 relative z-10">
+              <span
+                class="inline-block text-sm bg-purple-900/60 text-purple-300 px-4 py-1.5 rounded-full border border-purple-500/40 font-mono tracking-widest font-semibold"><span
+                  class="text-gray-400 mr-2 text-[10px] tracking-normal uppercase">ID</span> <span
+                  class="user-ref-code">...</span></span>
+              <span
+                class="inline-block text-sm bg-green-900/60 text-green-400 px-4 py-1.5 rounded-full border border-green-500/40 font-semibold user-plan">No
+                Plan</span>
+            </div>
+          </div>
+
+          <!-- Info Cards -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="glass rounded-2xl p-5 text-center">
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">Total Earned</p>
+              <p class="text-2xl font-extrabold text-white" id="stat-earn-profile">৳0</p>
+            </div>
+            <div class="glass rounded-2xl p-5 text-center">
+              <p class="text-gray-400 text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
+              <p class="text-2xl font-extrabold text-green-400 user-balance">৳0</p>
+            </div>
+          </div>
+
+          <!-- Update Profile Details -->
+          <form onsubmit="handleUpdateProfile(event)" class="glass rounded-2xl p-5 space-y-4">
+            <h4 class="font-semibold flex items-center gap-2 text-white text-lg"><svg class="w-5 h-5 text-purple-400"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg> Edit Profile</h4>
+            <div class="input-group">
+              <label class="input-label">Full Name</label>
+              <input type="text" id="prof-name" class="input-field" required />
+            </div>
+            <div class="input-group">
+              <label class="input-label">Email Address</label>
+              <input type="email" id="prof-email" class="input-field" required />
+            </div>
+            <button type="submit" class="btn-primary w-full shadow-[0_4px_20px_rgba(168,85,247,0.3)]"
+              id="btn-update-prof">Save Changes</button>
+          </form>
+
+          <!-- Change Password -->
+          <form onsubmit="handleChangePassword(event)" class="glass rounded-2xl p-5 space-y-4">
+            <h4 class="font-semibold flex items-center gap-2 text-white text-lg"><svg class="w-5 h-5 text-orange-400"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg> Change Password</h4>
+            <div class="input-group">
+              <label class="input-label">New Password</label>
+              <input type="password" id="new-pwd" class="input-field" placeholder="••••••••" minlength="6" required />
+            </div>
+            <button type="submit" class="btn-outline w-full hover:bg-white hover:text-black transition font-semibold"
+              id="btn-update-pwd">Update Password</button>
+          </form>
+
+          <!-- Logout -->
+          <button onclick="handleLogout()"
+            class="w-full py-4 rounded-2xl border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] transition font-bold flex items-center justify-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout Account
+          </button>
+        </div>
+
+      </main>
+    </div><!-- end main wrapper -->
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-dark border-t border-white/5 flex items-stretch">
+      <button onclick="navigate('dashboard')" id="mob-dashboard" class="mob-nav-item active-mob-nav flex-1">
+        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="text-xs mt-1">Home</span>
+      </button>
+      <button onclick="navigate('plans')" id="mob-plans" class="mob-nav-item flex-1">
+        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span class="text-xs mt-1">Plans</span>
+      </button>
+      <button onclick="navigate('refer')" id="mob-refer" class="mob-nav-item flex-1">
+        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" />
+        </svg>
+        <span class="text-xs mt-1">Refer</span>
+      </button>
+      <button onclick="navigate('wallet')" id="mob-wallet" class="mob-nav-item flex-1">
+        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+        <span class="text-xs mt-1">Wallet</span>
+      </button>
+      <button onclick="navigate('profile')" id="mob-profile" class="mob-nav-item flex-1">
+        <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span class="text-xs mt-1">Profile</span>
+      </button>
+    </nav>
+
+  </div><!-- end app-section -->
+
+  <script src="script.js"></script>
+</body>
+
+</html>

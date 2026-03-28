@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>NextGen Earn – Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { neon: { green: '#00ff88', purple: '#a855f7', blue: '#3b82f6' } } } }
+    }
+  </script>
+  <style>
+    .admin-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      color: #9ca3af;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .admin-nav:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+
+    .admin-nav.active {
+      background: rgba(168, 85, 247, 0.2);
+      color: #d8b4fe;
+    }
+
+    .badge-pending {
+      font-size: 0.75rem;
+      background: rgba(120, 53, 15, 0.5);
+      color: #fbbf24;
+      border: 1px solid rgba(180, 83, 9, 0.3);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .badge-approved {
+      font-size: 0.75rem;
+      background: rgba(6, 78, 59, 0.5);
+      color: #34d399;
+      border: 1px solid rgba(6, 95, 70, 0.3);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+    }
+
+    .badge-rejected {
+      font-size: 0.75rem;
+      background: rgba(127, 29, 29, 0.5);
+      color: #f87171;
+      border: 1px solid rgba(153, 27, 27, 0.3);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-950 text-white font-sans min-h-screen">
+
+  <!-- Toast -->
+  <div id="toast" class="fixed top-5 right-5 z-[9999] hidden max-w-xs w-full"></div>
+  <!-- Loader -->
+  <div id="loader" class="fixed inset-0 z-[9998] bg-gray-950/90 flex items-center justify-center hidden">
+    <div class="w-12 h-12 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+  </div>
+
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div id="admin-login" class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass rounded-3xl p-8 w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div
+          class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl">
+          🛡️</div>
+        <h1 class="text-2xl font-extrabold">Admin Panel</h1>
+        <p class="text-gray-400 text-sm mt-1">NextGen Earn Administration</p>
+      </div>
+      <form onsubmit="adminLogin(event)" class="space-y-4">
+        <div class="input-group">
+          <label class="input-label">Admin Email</label>
+          <input type="email" id="admin-email" class="input-field" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <input type="password" id="admin-pass" class="input-field" required />
+        </div>
+        <button type="submit" class="btn-primary w-full">Login as Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN DASHBOARD ===== -->
+  <div id="admin-app" class="hidden flex flex-col md:flex-row min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 glass-dark border-b border-white/5 sticky top-0 z-40">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">🛡️</div>
+        <span class="font-bold text-lg gradient-text">Admin</span>
+      </div>
+      <button onclick="toggleSidebar()" class="text-2xl text-gray-300 hover:text-white">☰</button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="admin-sidebar" class="w-64 flex-shrink-0 glass-dark border-r border-white/5 flex flex-col p-6 fixed h-full z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+      <div class="flex items-center justify-between mb-10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-lg">🛡️</div>
+          <span class="text-lg font-extrabold gradient-text">Admin Panel</span>
+        </div>
+        <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white text-2xl">&times;</button>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <div onclick="adminNav('dashboard')" id="anav-dashboard" class="admin-nav active">📊 Dashboard</div>
+        <div onclick="adminNav('users')" id="anav-users" class="admin-nav">👥 Users</div>
+        <div onclick="adminNav('deposits')" id="anav-deposits" class="admin-nav">📥 Deposits</div>
+        <div onclick="adminNav('withdraws')" id="anav-withdraws" class="admin-nav">📤 Withdrawals</div>
+      </nav>
+      <button onclick="adminLogout()" class="admin-nav text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-4">🚪
+        Logout</button>
+    </aside>
+
+    <!-- Overlay for Mobile -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <!-- Main -->
+    <main class="md:ml-64 flex-1 p-4 md:p-8 space-y-6 w-full max-w-[100vw]">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div id="apage-dashboard" class="space-y-6">
+        <h2 class="text-2xl font-bold">Dashboard Overview</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="dash-stats">
+          <div class="glass rounded-2xl p-5 text-center stat-card">
+            <p class="text-3xl font-extrabold text-purple-400" id="d-users">-</p>
+            <p class="text-gray-400 text-xs mt-1">Total Users</p>
+          </div>
+          <div class="glass rounded-2xl p-5 text-center stat-card">
+            <p class="text-3xl font-extrabold text-green-400" id="d-deposits">-</p>
+            <p class="text-gray-400 text-xs mt-1">Total Deposited</p>
+          </div>
+          <div class="glass rounded-2xl p-5 text-center stat-card">
+            <p class="text-3xl font-extrabold text-pink-400" id="d-withdraws">-</p>
+            <p class="text-gray-400 text-xs mt-1">Total Withdrawn</p>
+          </div>
+          <div class="glass rounded-2xl p-5 text-center stat-card">
+            <p class="text-3xl font-extrabold text-blue-400" id="d-commissions">-</p>
+            <p class="text-gray-400 text-xs mt-1">Commissions Paid</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="glass rounded-2xl p-5 border border-yellow-500/30">
+            <p class="text-yellow-400 font-semibold mb-1">⏳ Pending Deposits</p>
+            <p class="text-3xl font-extrabold" id="d-pend-dep">-</p>
+          </div>
+          <div class="glass rounded-2xl p-5 border border-yellow-500/30">
+            <p class="text-yellow-400 font-semibold mb-1">⏳ Pending Withdrawals</p>
+            <p class="text-3xl font-extrabold" id="d-pend-wd">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div id="apage-users" class="space-y-4 hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 class="text-2xl font-bold">User Management</h2>
+          <div class="flex gap-2 w-full md:w-auto">
+            <input type="text" id="user-search-input" placeholder="Search by Email or ID..." 
+              class="flex-1 md:w-64 px-4 py-2 rounded-xl bg-gray-900 border border-white/10 text-sm focus:border-purple-500 outline-none transition" />
+            <button onclick="loadUsers()" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-sm font-semibold transition">Search</button>
+          </div>
+        </div>
+        <div class="glass rounded-2xl overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-white/10">
+              <tr class="text-gray-400 text-xs uppercase tracking-wider">
+                <th class="text-left px-4 py-3">Name / Email</th>
+                <th class="text-left px-4 py-3">Ref Code</th>
+                <th class="text-left px-4 py-3">Plan</th>
+                <th class="text-left px-4 py-3">Balance</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Set Balance</th>
+                <th class="text-left px-4 py-3">Set Plan</th>
+                <th class="text-left px-4 py-3">Block</th>
+              </tr>
+            </thead>
+            <tbody id="users-table" class="divide-y divide-white/5">
+              <tr>
+                <td colspan="8" class="text-center text-gray-500 py-8">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== DEPOSITS ===== -->
+      <div id="apage-deposits" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Deposit Requests</h2>
+          <div class="flex gap-2">
+            <button onclick="loadDeposits('pending')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-yellow-900/50 text-yellow-400 border border-yellow-700/30 hover:bg-yellow-900/80 transition">Pending</button>
+            <button onclick="loadDeposits('approved')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-green-900/50 text-green-400 border border-green-700/30 hover:bg-green-900/80 transition">Approved</button>
+            <button onclick="loadDeposits('')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700 transition">All</button>
+          </div>
+        </div>
+        <div class="glass rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="border-b border-white/10">
+              <tr class="text-gray-400 text-xs uppercase tracking-wider">
+                <th class="text-left px-4 py-3">User ID</th>
+                <th class="text-left px-4 py-3">Method</th>
+                <th class="text-left px-4 py-3">TX ID</th>
+                <th class="text-left px-4 py-3">Amount</th>
+                <th class="text-left px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="deposits-table" class="divide-y divide-white/5">
+              <tr>
+                <td colspan="5" class="text-center text-gray-500 py-8">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== WITHDRAWALS ===== -->
+      <div id="apage-withdraws" class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Withdrawal Requests</h2>
+          <div class="flex gap-2">
+            <button onclick="loadWithdraws('pending')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-yellow-900/50 text-yellow-400 border border-yellow-700/30 hover:bg-yellow-900/80 transition">Pending</button>
+            <button onclick="loadWithdraws('approved')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-green-900/50 text-green-400 border border-green-700/30 hover:bg-green-900/80 transition">Approved</button>
+            <button onclick="loadWithdraws('')"
+              class="px-3 py-1.5 text-xs rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700 transition">All</button>
+          </div>
+        </div>
+        <div class="glass rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="border-b border-white/10">
+              <tr class="text-gray-400 text-xs uppercase tracking-wider">
+                <th class="text-left px-4 py-3">User ID</th>
+                <th class="text-left px-4 py-3">Method</th>
+                <th class="text-left px-4 py-3">Account</th>
+                <th class="text-left px-4 py-3">Amount</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-left px-4 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody id="withdraws-table" class="divide-y divide-white/5">
+              <tr>
+                <td colspan="6" class="text-center text-gray-500 py-8">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const API = 'http://localhost:5500/api';
+    let adminToken = localStorage.getItem('admin_token');
+
+    const apiFetch = async (endpoint, options = {}) => {
+      const headers = { 'Content-Type': 'application/json' };
+      if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+      const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Request failed');
+      return data;
+    };
+    const fmtMoney = n => '৳' + (n || 0).toLocaleString();
+    const fmtDate = ts => {
+      if (!ts) return '-';
+      const d = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
+      return d.toLocaleDateString('en-GB');
+    };
+
+    // ── Init ──────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      if (adminToken) showAdminApp();
+    });
+
+    // ── Login ─────────────────────────────────────────────────────────
+    async function adminLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const pass = document.getElementById('admin-pass').value;
+      showLoader();
+      try {
+        const res = await apiFetch('/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
+        // Verify admin access
+        adminToken = res.data.idToken;
+        localStorage.setItem('admin_token', adminToken);
+        // Test admin endpoint
+        await apiFetch('/admin/dashboard');
+        showAdminApp();
+        showToast('Welcome, Admin! 🛡️', 'success');
+      } catch (err) {
+        hideLoader();
+        localStorage.removeItem('admin_token');
+        adminToken = null;
+        showToast(err.message.includes('Admin') ? 'Access denied: not an admin account' : err.message, 'error');
+      }
+    }
+
+    function showAdminApp() {
+      document.getElementById('admin-login').classList.add('hidden');
+      document.getElementById('admin-app').classList.remove('hidden');
+      hideLoader();
+      adminNav('dashboard');
+    }
+
+    function adminLogout() {
+      adminToken = null;
+      localStorage.removeItem('admin_token');
+      document.getElementById('admin-app').classList.add('hidden');
+      document.getElementById('admin-login').classList.remove('hidden');
+      showToast('Logged out', 'info');
+    }
+
+    // ── Navigation ────────────────────────────────────────────────────
+    function adminNav(page) {
+      ['dashboard', 'users', 'deposits', 'withdraws'].forEach(p => {
+        document.getElementById(`apage-${p}`)?.classList.add('hidden');
+        document.getElementById(`anav-${p}`)?.classList.remove('active');
+      });
+      document.getElementById(`apage-${page}`)?.classList.remove('hidden');
+      document.getElementById(`anav-${page}`)?.classList.add('active');
+      
+      // Close sidebar on mobile after navigation
+      const sidebar = document.getElementById('admin-sidebar');
+      if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        toggleSidebar();
+      }
+
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'users') loadUsers();
+      if (page === 'deposits') loadDeposits('pending');
+      if (page === 'withdraws') loadWithdraws('pending');
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    // ── Dashboard ─────────────────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const res = await apiFetch('/admin/dashboard');
+        const d = res.data;
+        document.getElementById('d-users').textContent = d.totalUsers;
+        document.getElementById('d-deposits').textContent = fmtMoney(d.totalDeposited);
+        document.getElementById('d-withdraws').textContent = fmtMoney(d.totalWithdrawn);
+        document.getElementById('d-commissions').textContent = fmtMoney(d.totalCommissions);
+        document.getElementById('d-pend-dep').textContent = d.pendingDeposits;
+        document.getElementById('d-pend-wd').textContent = d.pendingWithdraws;
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────
+    async function loadUsers() {
+      const search = document.getElementById('user-search-input')?.value.trim() || '';
+      const tbody = document.getElementById('users-table');
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-8">Loading...</td></tr>';
+      try {
+        const url = search ? `/admin/users?search=${encodeURIComponent(search)}` : '/admin/users';
+        const res = await apiFetch(url);
+        if (!res.data.length) { 
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-8">
+            ${search ? `No users found matching "${search}"` : 'No users yet.'}
+          </td></tr>`; 
+          return; 
+        }
+        tbody.innerHTML = res.data.map(u => `
+      <tr class="hover:bg-white/3 transition">
+        <td class="px-4 py-3">
+          <p class="font-medium">${u.name}</p>
+          <p class="text-gray-500 text-xs">${u.email}</p>
+          <p class="text-gray-600 text-xs font-mono">${u.uid.slice(0, 12)}...</p>
+        </td>
+        <td class="px-4 py-3 font-mono text-purple-400 text-xs">${u.referralCode}</td>
+        <td class="px-4 py-3">${u.plan > 0 ? `<span class="text-green-400 font-bold">৳${u.plan}</span>` : '<span class="text-gray-500">None</span>'}</td>
+        <td class="px-4 py-3 text-green-400 font-semibold">${fmtMoney(u.balance)}</td>
+        <td class="px-4 py-3">
+          ${u.isBlocked
+            ? '<span class="badge-rejected">Blocked</span>'
+            : '<span class="badge-approved">Active</span>'}
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex gap-1">
+            <input type="number" id="bal-${u.uid}" placeholder="Amount" class="w-20 px-2 py-1 text-xs rounded-lg bg-gray-800 border border-gray-600 text-white" />
+            <button onclick="setBalance('${u.uid}')" class="text-xs px-2 py-1 rounded-lg bg-blue-900/50 text-blue-400 border border-blue-700/30 hover:bg-blue-900/80 transition whitespace-nowrap">Set ৳</button>
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <select id="plan-${u.uid}" class="px-2 py-1 text-xs rounded-lg bg-gray-800 border border-gray-600 text-white">
+            <option value="0" ${u.plan === 0 ? 'selected' : ''}>None</option>
+            <option value="1000" ${u.plan === 1000 ? 'selected' : ''}>৳1000</option>
+            <option value="2000" ${u.plan === 2000 ? 'selected' : ''}>৳2000</option>
+          </select>
+          <button onclick="setPlan('${u.uid}')" class="mt-1 text-xs px-2 py-1 rounded-lg bg-purple-900/50 text-purple-400 border border-purple-700/30 hover:bg-purple-900/80 transition">Apply</button>
+        </td>
+        <td class="px-4 py-3">
+          <button onclick="toggleBlock('${u.uid}', ${!u.isBlocked})"
+            class="text-xs px-3 py-1.5 rounded-lg border transition ${u.isBlocked
+            ? 'border-green-600/40 text-green-400 hover:bg-green-900/30'
+            : 'border-red-600/40 text-red-400 hover:bg-red-900/30'}">
+            ${u.isBlocked ? 'Unblock' : 'Block'}
+          </button>
+        </td>
+      </tr>`).join('');
+      } catch (err) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-400 py-8">${err.message}</td></tr>`; }
+    }
+
+    async function toggleBlock(uid, isBlocked) {
+      try {
+        await apiFetch('/admin/block-user', { method: 'PATCH', body: JSON.stringify({ uid, isBlocked }) });
+        showToast(isBlocked ? '🔒 User blocked' : '✅ User unblocked', 'success');
+        loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function setBalance(uid) {
+      const val = document.getElementById(`bal-${uid}`)?.value;
+      if (!val || isNaN(val)) { showToast('Enter a valid amount', 'error'); return; }
+      try {
+        await apiFetch('/admin/set-balance', { method: 'PATCH', body: JSON.stringify({ uid, balance: parseFloat(val) }) });
+        showToast(`✅ Balance set to ৳${val}`, 'success');
+        loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function setPlan(uid) {
+      const plan = document.getElementById(`plan-${uid}`)?.value;
+      try {
+        await apiFetch('/admin/set-plan', { method: 'PATCH', body: JSON.stringify({ uid, plan: parseInt(plan) }) });
+        showToast(`✅ Plan set to ${plan > 0 ? '৳' + plan : 'None'}`, 'success');
+        loadUsers();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ── Deposits ──────────────────────────────────────────────────────
+    async function loadDeposits(status = '') {
+      const tbody = document.getElementById('deposits-table');
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Loading...</td></tr>';
+      try {
+        const url = status ? `/admin/deposits?status=${status}` : '/admin/deposits';
+        const res = await apiFetch(url);
+        if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">No deposits.</td></tr>'; return; }
+        tbody.innerHTML = res.data.map(d => `
+      <tr class="hover:bg-white/3 transition">
+        <td class="px-4 py-3 text-xs text-gray-400 font-mono">${d.userId?.slice(0, 10)}...</td>
+        <td class="px-4 py-3 uppercase font-semibold text-blue-400">${d.method}</td>
+        <td class="px-4 py-3 text-xs text-gray-400 font-mono">${d.transactionId}</td>
+        <td class="px-4 py-3 text-green-400 font-bold">${fmtMoney(d.amount)}</td>
+        <td class="px-4 py-3"><span class="badge-${d.status}">${d.status}</span></td>
+      </tr>`).join('');
+      } catch (err) { tbody.innerHTML = `<tr><td colspan="5" class="text-center text-red-400 py-8">${err.message}</td></tr>`; }
+    }
+
+    async function handleDeposit(depositId, action) {
+      showLoader();
+      try {
+        await apiFetch('/admin/deposit/approve', { method: 'POST', body: JSON.stringify({ depositId, action }) });
+        hideLoader();
+        showToast(`Deposit ${action === 'approve' ? 'approved ✅' : 'rejected ❌'}`, action === 'approve' ? 'success' : 'error');
+        loadDeposits('pending');
+        loadDashboard();
+      } catch (err) { hideLoader(); showToast(err.message, 'error'); }
+    }
+
+    // ── Withdrawals ───────────────────────────────────────────────────
+    async function loadWithdraws(status = '') {
+      const tbody = document.getElementById('withdraws-table');
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-8">Loading...</td></tr>';
+      try {
+        const url = status ? `/admin/withdraws?status=${status}` : '/admin/withdraws';
+        const res = await apiFetch(url);
+        if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-8">No withdrawals.</td></tr>'; return; }
+        tbody.innerHTML = res.data.map(w => `
+      <tr class="hover:bg-white/3 transition">
+        <td class="px-4 py-3 text-xs text-gray-400 font-mono">${w.userId?.slice(0, 10)}...</td>
+        <td class="px-4 py-3 uppercase font-semibold text-blue-400">${w.method}</td>
+        <td class="px-4 py-3 text-xs text-gray-400">${w.accountNumber}</td>
+        <td class="px-4 py-3 text-pink-400 font-bold">${fmtMoney(w.amount)}</td>
+        <td class="px-4 py-3"><span class="badge-${w.status}">${w.status}</span></td>
+        <td class="px-4 py-3">
+          ${w.status === 'pending' ? `
+            <div class="flex gap-2">
+              <button onclick="handleWithdraw('${w.id}','approve')" class="text-xs px-3 py-1.5 rounded-lg bg-green-900/50 text-green-400 border border-green-700/30 hover:bg-green-900/80 transition">✓ Approve</button>
+              <button onclick="handleWithdraw('${w.id}','reject')"  class="text-xs px-3 py-1.5 rounded-lg bg-red-900/50 text-red-400 border border-red-700/30 hover:bg-red-900/80 transition">✗ Reject</button>
+            </div>` : '<span class="text-gray-600 text-xs">Done</span>'}
+        </td>
+      </tr>`).join('');
+      } catch (err) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-red-400 py-8">${err.message}</td></tr>`; }
+    }
+
+    async function handleWithdraw(withdrawId, action) {
+      showLoader();
+      try {
+        await apiFetch('/admin/withdraw/approve', { method: 'POST', body: JSON.stringify({ withdrawId, action }) });
+        hideLoader();
+        showToast(`Withdrawal ${action === 'approve' ? 'approved ✅' : 'rejected ❌'}`, action === 'approve' ? 'success' : 'error');
+        loadWithdraws('pending');
+        loadDashboard();
+      } catch (err) { hideLoader(); showToast(err.message, 'error'); }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icons = { success: '✓', error: '✕', info: 'ℹ' };
+      toast.className = `fixed top-5 right-5 z-[9999] max-w-xs w-full toast-${type}`;
+      toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+      toast.classList.remove('hidden');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => {
+        toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => { toast.classList.add('hidden'); toast.style.opacity = ''; toast.style.transition = ''; }, 400);
+      }, 3500);
+    }
+    function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
+    function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+  </script>
+</body>
+
+</html>
