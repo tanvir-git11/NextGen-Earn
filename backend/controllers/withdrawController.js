@@ -11,6 +11,17 @@ const requestWithdraw = async (req, res, next) => {
     const { method, accountNumber, amount } = req.body;
     const amountNum = parseFloat(amount);
 
+    // ── Check Dynamic Min Withdraw ──────────────────────────────────────
+    const settingsDoc = await db.collection('settings').doc('config').get();
+    const minWithdraw = settingsDoc.exists ? settingsDoc.data().minWithdraw : 500;
+
+    if (amountNum < minWithdraw) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum withdrawal amount is ${minWithdraw} BDT`,
+      });
+    }
+
     // ── Check 5-Level Referral Constraints ───────────────────────────────
     const userDoc = await db.collection('users').doc(uid).get();
     const userData = userDoc.data();

@@ -10,6 +10,17 @@ const checkoutDeposit = async (req, res, next) => {
     const uid = req.uid;
     const { amount } = req.body;
     const amountNum = parseFloat(amount);
+
+    // ── Check Dynamic Min Deposit ───────────────────────────────────────
+    const settingsDoc = await db.collection('settings').doc('config').get();
+    const minDeposit = settingsDoc.exists ? settingsDoc.data().minDeposit : 100;
+
+    if (amountNum < minDeposit) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum deposit amount is ${minDeposit} BDT`,
+      });
+    }
     
     // Convert to string for RupantorPay
     const data = JSON.stringify({

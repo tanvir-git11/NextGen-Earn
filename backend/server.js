@@ -14,6 +14,7 @@ const depositRoutes = require('./routes/depositRoutes');
 const withdrawRoutes = require('./routes/withdrawRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const spinRoutes = require('./routes/spinRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +47,7 @@ app.use('/api/deposit', depositRoutes);
 app.use('/api/withdraw', withdrawRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/spin', spinRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {

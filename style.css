@@ -329,7 +329,7 @@ body { overflow-x: hidden; }
   height: 50%;
   background: var(--bg);
   transform-origin: bottom right;
-  transform: rotate(calc(var(--i) * 36deg)) skewY(-54deg);
+  transform: rotate(calc(var(--i) * 60deg)) skewY(-30deg);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -337,9 +337,9 @@ body { overflow-x: hidden; }
 
 .segment span {
   position: absolute;
-  transform: skewY(54deg) rotate(18deg);
-  left: 20px;
-  top: 40px;
+  transform: skewY(30deg) rotate(30deg);
+  left: 30px;
+  top: 55px;
   font-weight: 900;
   color: white;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -372,5 +372,5 @@ body.drawer-open {
 }
 
 @media (max-width: 640px) {
-  .segment span { font-size: 0.75rem; left: 15px; top: 35px; }
+  .segment span { font-size: 0.8rem; left: 20px; top: 45px; }
 }

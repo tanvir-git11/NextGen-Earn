@@ -28,6 +28,17 @@
       transition: all 0.15s;
     }
 
+    /* Fix table scrolling */
+    table {
+      min-width: 650px;
+    }
+
+    @media (min-width: 768px) {
+      table {
+        min-width: 100%;
+      }
+    }
+
     .admin-nav:hover {
       background: rgba(255, 255, 255, 0.05);
       color: white;
@@ -104,19 +115,25 @@
   <div id="admin-app" class="hidden flex flex-col md:flex-row min-h-screen">
 
     <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 glass-dark border-b border-white/5 sticky top-0 z-40">
+    <header
+      class="md:hidden flex items-center justify-between p-4 glass-dark border-b border-white/5 sticky top-0 z-40">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">🛡️</div>
+        <div
+          class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
+          🛡️</div>
         <span class="font-bold text-lg gradient-text">Admin</span>
       </div>
       <button onclick="toggleSidebar()" class="text-2xl text-gray-300 hover:text-white">☰</button>
     </header>
 
     <!-- Sidebar -->
-    <aside id="admin-sidebar" class="w-64 flex-shrink-0 glass-dark border-r border-white/5 flex flex-col p-6 fixed h-full z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+    <aside id="admin-sidebar"
+      class="w-64 flex-shrink-0 glass-dark border-r border-white/5 flex flex-col p-6 fixed h-full z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
       <div class="flex items-center justify-between mb-10">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-lg">🛡️</div>
+          <div
+            class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-lg">
+            🛡️</div>
           <span class="text-lg font-extrabold gradient-text">Admin Panel</span>
         </div>
         <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -126,6 +143,7 @@
         <div onclick="adminNav('users')" id="anav-users" class="admin-nav">👥 Users</div>
         <div onclick="adminNav('deposits')" id="anav-deposits" class="admin-nav">📥 Deposits</div>
         <div onclick="adminNav('withdraws')" id="anav-withdraws" class="admin-nav">📤 Withdrawals</div>
+        <div onclick="adminNav('settings')" id="anav-settings" class="admin-nav">⚙️ Settings</div>
       </nav>
       <button onclick="adminLogout()" class="admin-nav text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-4">🚪
         Logout</button>
@@ -175,12 +193,15 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 class="text-2xl font-bold">User Management</h2>
           <div class="flex gap-2 w-full md:w-auto">
-            <input type="text" id="user-search-input" placeholder="Search by Email or ID..." 
+            <input type="text" id="user-search-input" placeholder="Search by Email or ID..."
               class="flex-1 md:w-64 px-4 py-2 rounded-xl bg-gray-900 border border-white/10 text-sm focus:border-purple-500 outline-none transition" />
-            <button onclick="loadUsers()" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-sm font-semibold transition">Search</button>
+            <button onclick="loadUsers()"
+              class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-sm font-semibold transition">Search</button>
           </div>
         </div>
-        <div class="glass rounded-2xl overflow-x-auto">
+        <div class="glass rounded-2xl overflow-x-auto max-w-full">
+          <p class="text-[10px] text-gray-500 md:hidden px-4 py-2 italic border-b border-white/5">← Swipe to see more →
+          </p>
           <table class="w-full text-sm">
             <thead class="border-b border-white/10">
               <tr class="text-gray-400 text-xs uppercase tracking-wider">
@@ -205,9 +226,9 @@
 
       <!-- ===== DEPOSITS ===== -->
       <div id="apage-deposits" class="space-y-4 hidden">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 class="text-2xl font-bold">Deposit Requests</h2>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button onclick="loadDeposits('pending')"
               class="px-3 py-1.5 text-xs rounded-lg bg-yellow-900/50 text-yellow-400 border border-yellow-700/30 hover:bg-yellow-900/80 transition">Pending</button>
             <button onclick="loadDeposits('approved')"
@@ -216,7 +237,9 @@
               class="px-3 py-1.5 text-xs rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700 transition">All</button>
           </div>
         </div>
-        <div class="glass rounded-2xl overflow-hidden">
+        <div class="glass rounded-2xl overflow-x-auto max-w-full">
+          <p class="text-[10px] text-gray-500 md:hidden px-4 py-2 italic border-b border-white/5">← Swipe to see more →
+          </p>
           <table class="w-full text-sm">
             <thead class="border-b border-white/10">
               <tr class="text-gray-400 text-xs uppercase tracking-wider">
@@ -238,9 +261,9 @@
 
       <!-- ===== WITHDRAWALS ===== -->
       <div id="apage-withdraws" class="space-y-4 hidden">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 class="text-2xl font-bold">Withdrawal Requests</h2>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button onclick="loadWithdraws('pending')"
               class="px-3 py-1.5 text-xs rounded-lg bg-yellow-900/50 text-yellow-400 border border-yellow-700/30 hover:bg-yellow-900/80 transition">Pending</button>
             <button onclick="loadWithdraws('approved')"
@@ -249,7 +272,9 @@
               class="px-3 py-1.5 text-xs rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700 transition">All</button>
           </div>
         </div>
-        <div class="glass rounded-2xl overflow-hidden">
+        <div class="glass rounded-2xl overflow-x-auto max-w-full">
+          <p class="text-[10px] text-gray-500 md:hidden px-4 py-2 italic border-b border-white/5">← Swipe to see more →
+          </p>
           <table class="w-full text-sm">
             <thead class="border-b border-white/10">
               <tr class="text-gray-400 text-xs uppercase tracking-wider">
@@ -270,11 +295,47 @@
         </div>
       </div>
 
+      <!-- ===== SETTINGS ===== -->
+      <div id="apage-settings" class="space-y-6 hidden">
+        <h2 class="text-2xl font-bold">Global Settings</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass rounded-3xl p-6 space-y-4">
+            <h3 class="text-lg font-semibold text-purple-400">Transaction Limits</h3>
+
+            <div class="space-y-4">
+              <div class="input-group">
+                <label class="input-label">Minimum Deposit (BDT)</label>
+                <input type="number" id="set-min-deposit" class="input-field" placeholder="100" />
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Minimum Withdrawal (BDT)</label>
+                <input type="number" id="set-min-withdraw" class="input-field" placeholder="500" />
+              </div>
+
+              <button onclick="saveSettings()" class="btn-primary w-full py-3">Save Changes</button>
+            </div>
+          </div>
+
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-lg font-semibold text-blue-400 mb-4">Information</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              These settings control the minimum amounts allowed for users when they attempt to deposit or withdraw
+              funds.
+              <br><br>
+              Changes are applied immediately across the platform. Users will see these limits updated in their
+              respective deposit and withdrawal modals.
+            </p>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
   <script>
-    const API = 'http://localhost:5500/api';
+    const API = 'https://YOUR-RENDER-APP.onrender.com/api'; 
     let adminToken = localStorage.getItem('admin_token');
 
     const apiFetch = async (endpoint, options = {}) => {
@@ -337,13 +398,13 @@
 
     // ── Navigation ────────────────────────────────────────────────────
     function adminNav(page) {
-      ['dashboard', 'users', 'deposits', 'withdraws'].forEach(p => {
+      ['dashboard', 'users', 'deposits', 'withdraws', 'settings'].forEach(p => {
         document.getElementById(`apage-${p}`)?.classList.add('hidden');
         document.getElementById(`anav-${p}`)?.classList.remove('active');
       });
       document.getElementById(`apage-${page}`)?.classList.remove('hidden');
       document.getElementById(`anav-${page}`)?.classList.add('active');
-      
+
       // Close sidebar on mobile after navigation
       const sidebar = document.getElementById('admin-sidebar');
       if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
@@ -354,6 +415,7 @@
       if (page === 'users') loadUsers();
       if (page === 'deposits') loadDeposits('pending');
       if (page === 'withdraws') loadWithdraws('pending');
+      if (page === 'settings') loadSettings();
     }
 
     function toggleSidebar() {
@@ -390,11 +452,11 @@
       try {
         const url = search ? `/admin/users?search=${encodeURIComponent(search)}` : '/admin/users';
         const res = await apiFetch(url);
-        if (!res.data.length) { 
+        if (!res.data.length) {
           tbody.innerHTML = `<tr><td colspan="8" class="text-center text-gray-500 py-8">
             ${search ? `No users found matching "${search}"` : 'No users yet.'}
-          </td></tr>`; 
-          return; 
+          </td></tr>`;
+          return;
         }
         tbody.innerHTML = res.data.map(u => `
       <tr class="hover:bg-white/3 transition">
@@ -529,6 +591,42 @@
         loadWithdraws('pending');
         loadDashboard();
       } catch (err) { hideLoader(); showToast(err.message, 'error'); }
+    }
+
+    // ── Settings ──────────────────────────────────────────────────────
+    async function loadSettings() {
+      try {
+        const res = await apiFetch('/admin/settings');
+        const s = res.data;
+        document.getElementById('set-min-deposit').value = s.minDeposit || 100;
+        document.getElementById('set-min-withdraw').value = s.minWithdraw || 500;
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function saveSettings() {
+      const minDeposit = document.getElementById('set-min-deposit').value;
+      const minWithdraw = document.getElementById('set-min-withdraw').value;
+
+      if (!minDeposit || !minWithdraw) {
+        showToast('Please fill all fields', 'error');
+        return;
+      }
+
+      showLoader();
+      try {
+        await apiFetch('/admin/settings', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            minDeposit: parseFloat(minDeposit),
+            minWithdraw: parseFloat(minWithdraw)
+          })
+        });
+        hideLoader();
+        showToast('Settings saved successfully! ✅', 'success');
+      } catch (err) {
+        hideLoader();
+        showToast(err.message, 'error');
+      }
     }
 
     // ── Toast ─────────────────────────────────────────────────────────

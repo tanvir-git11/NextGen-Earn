@@ -315,8 +315,8 @@
           <!-- Stats Grid -->
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="glass rounded-2xl p-4 text-center stat-card">
-              <p class="text-2xl font-extrabold text-purple-400" id="stat-refs">0</p>
-              <p class="text-gray-400 text-xs mt-1">Team Members</p>
+              <p id="stat-refs" class="text-2xl font-extrabold text-purple-400">0</p>
+              <p class="text-gray-400 text-[10px] uppercase tracking-wider mt-1 font-semibold">Total Team</p>
             </div>
             <div class="glass rounded-2xl p-4 text-center stat-card">
               <p class="text-2xl font-extrabold text-green-400" id="stat-active">0</p>
@@ -457,9 +457,13 @@
               </div>
             </div>
 
-            <!-- Referral Link -->
-            <div class="glass rounded-2xl p-5 glow-card-blue">
-              <p class="text-gray-400 text-xs uppercase tracking-wider mb-3 font-semibold">Your Referral Link</p>
+            <div class="glass rounded-2xl p-5 glow-card-blue border border-blue-500/20">
+              <p class="text-gray-400 text-[10px] uppercase tracking-wider mb-3 font-semibold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+                Your Referral ID
+              </p>
               <div class="flex gap-2">
                 <input id="ref-link" readonly value="https://nextgenearn.io/join?ref=JD2024X"
                   class="input-field flex-1 text-sm bg-gray-800/60" />
@@ -482,9 +486,21 @@
                 <p class="text-gray-400 text-xs mt-1">Ref Earnings</p>
               </div>
             </div>
+            <!-- Team Breakdown -->
+            <div class="glass rounded-2xl p-5 border border-white/5 space-y-4">
+              <h4 class="font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> 
+                Team Breakdown
+              </h4>
+              <div id="level-breakdown" class="space-y-4">
+                <!-- Populated by JS -->
+                <p class="text-gray-500 text-xs py-2">Loading breakdown...</p>
+              </div>
+            </div>
+
             <!-- Referral List -->
             <div class="glass rounded-2xl p-5">
-              <h4 class="font-semibold mb-4">Your Referrals</h4>
+              <h4 class="font-semibold mb-4">Detailed Team List</h4>
               <div class="space-y-3" id="referral-list"></div>
             </div>
           </div>
@@ -494,7 +510,7 @@
         <div id="page-spin" class="page-content hidden space-y-6">
           <div class="glass rounded-2xl p-6 text-center space-y-4">
             <h3 class="text-2xl font-bold gradient-text">Spin & Win! 🎡</h3>
-            <p class="text-gray-400 text-sm">Refer Active Partners to get more spins! Each active referral = 1 spin.</p>
+            <p class="text-gray-400 text-sm">Refer Active Partners to get more spins! Each active referral = 12 spins.</p>
             <div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30">
               <span class="text-purple-400 font-bold">Available Spins:</span>
               <span id="spin-count-display" class="text-white font-black text-xl">0</span>
@@ -507,17 +523,13 @@
               <!-- CSS Wheel Segments will be rendered here via style.css or JS if needed, but we'll use a CSS approach -->
               <div id="wheel" class="w-full h-full relative">
                 <!-- Segments (10, 20, 30, 50, 100) -->
-                <div class="segment" style="--i:0; --bg:#8b5cf6;"><span>৳10</span></div>
-                <div class="segment" style="--i:1; --bg:#10b981;"><span>৳20</span></div>
-                <div class="segment" style="--i:2; --bg:#f59e0b;"><span>৳30</span></div>
-                <div class="segment" style="--i:3; --bg:#ef4444;"><span>৳50</span></div>
-                <div class="segment" style="--i:4; --bg:#3b82f6;"><span>৳100</span></div>
-                <!-- Duplicate for even distribution if needed, but user specified 5 prizes. Let's make 10 segments for better look (2 of each) -->
-                <div class="segment" style="--i:5; --bg:#8b5cf6;"><span>৳10</span></div>
-                <div class="segment" style="--i:6; --bg:#10b981;"><span>৳20</span></div>
-                <div class="segment" style="--i:7; --bg:#f59e0b;"><span>৳30</span></div>
-                <div class="segment" style="--i:8; --bg:#ef4444;"><span>৳50</span></div>
-                <div class="segment" style="--i:9; --bg:#3b82f6;"><span>৳100</span></div>
+                <!-- Segments (7 LOSE, 10, 30, 50) -->
+                <div class="segment" style="--i:0; --bg:#374151;"><span>LOSE</span></div>
+                <div class="segment" style="--i:1; --bg:#8b5cf6;"><span>WIN</span></div>
+                <div class="segment" style="--i:2; --bg:#1f2937;"><span>LOSE</span></div>
+                <div class="segment" style="--i:3; --bg:#f59e0b;"><span>WIN</span></div>
+                <div class="segment" style="--i:4; --bg:#374151;"><span>LOSE</span></div>
+                <div class="segment" style="--i:5; --bg:#ef4444;"><span>WIN</span></div>
               </div>
               <div class="absolute inset-0 flex items-center justify-center">
                 <div class="w-12 h-12 bg-white rounded-full shadow-lg z-10 flex items-center justify-center text-gray-900 font-bold border-4 border-gray-800">
@@ -547,7 +559,11 @@
               </div>
               <div class="flex gap-3">
                 <div class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
-                <p class="text-xs text-gray-400">You get <span class="text-white font-bold">1 Free Spin</span> automatically!</p>
+                <p class="text-xs text-gray-400">You get <span class="text-white font-bold">12 Free Spins</span> per referral!</p>
+              </div>
+              <div class="flex gap-3">
+                <div class="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xs font-bold flex-shrink-0">!</div>
+                <p class="text-xs text-gray-400">Spin Cooldown: <span class="text-white font-bold">Every 2 Hours</span></p>
               </div>
             </div>
           </div>
@@ -607,7 +623,10 @@
           </div>
           <form onsubmit="handleDeposit(event)" class="glass rounded-2xl p-5 space-y-4">
             <div class="input-group">
-              <label class="input-label">Amount (BDT)</label>
+              <div class="flex justify-between items-center mb-1">
+                <label class="input-label mb-0">Amount (BDT)</label>
+                <span id="dep-min-text" class="text-[10px] text-gray-500 font-mono">Min: ৳100</span>
+              </div>
               <input type="number" id="dep-amount" placeholder="1000" min="100" class="input-field" required />
             </div>
             <button type="submit"
@@ -656,7 +675,7 @@
               <span class="text-yellow-400 text-xl flex-shrink-0">⚠️</span>
               <div>
                 <p class="text-yellow-300 text-sm font-semibold">Withdrawal Rules</p>
-                <p class="text-gray-400 text-xs mt-1">Minimum withdrawal: ৳100 | Processing time: 1-24 hours</p>
+                <p id="wd-min-text" class="text-gray-400 text-xs mt-1">Minimum withdrawal: ৳500 | Processing time: 1-24 hours</p>
               </div>
             </div>
             <form onsubmit="handleWithdraw(event)" class="glass rounded-2xl p-5 space-y-4">

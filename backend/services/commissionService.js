@@ -48,7 +48,7 @@ const distributeCommission = async (buyerUid, planAmount) => {
     batch.update(parentRef, {
       balance: admin.firestore.FieldValue.increment(commissionAmount),
       totalEarnings: admin.firestore.FieldValue.increment(commissionAmount),
-      availableSpins: admin.firestore.FieldValue.increment(1),
+      availableSpins: admin.firestore.FieldValue.increment(12),
     });
 
     // Write a commission transaction record

@@ -39,8 +39,8 @@ const loginValidators = [
 // ─── Deposit Validators ───────────────────────────────────────────────────────
 const depositValidators = [
   body('amount')
-    .isFloat({ min: 100 })
-    .withMessage('Minimum deposit amount is 100'),
+    .isFloat()
+    .withMessage('Amount must be a number'),
 ];
 
 // ─── Withdraw Validators ──────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ const withdrawValidators = [
     .withMessage('Method must be bkash or nagad'),
   body('accountNumber').trim().notEmpty().withMessage('Account number is required'),
   body('amount')
-    .isFloat({ min: 1 })
+    .isFloat()
     .withMessage('Amount must be a positive number'),
 ];
 

@@ -13,6 +13,7 @@ const {
   setUserBalance,
   setUserPlan,
 } = require('../controllers/adminController');
+const { getSettings, updateSettings } = require('../controllers/settingsController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const adminMiddleware = require('../middlewares/adminMiddleware');
 
@@ -37,5 +38,9 @@ router.post('/deposit/approve', handleDeposit);
 // Withdraw Control
 router.get('/withdraws', getWithdraws);
 router.post('/withdraw/approve', handleWithdraw);
+
+// Global Settings Control
+router.get('/settings', getSettings);
+router.patch('/settings', updateSettings);
 
 module.exports = router;
