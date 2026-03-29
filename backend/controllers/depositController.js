@@ -111,6 +111,7 @@ const verifyDeposit = async (req, res, next) => {
       result.status === 'COMPLETED' || 
       result.status === 'Success' ||
       result.status === 'SUCCESS' ||
+      String(result.message).toLowerCase().includes('success') ||
       result.data?.status === 'Success' ||
       result.data?.status === 'SUCCESS' ||
       result.data?.status === 'COMPLETED';
@@ -138,16 +139,22 @@ const verifyDeposit = async (req, res, next) => {
       // Safe: Transaction valid, not duplicate, let's credit
       await creditBalance(uid, amountNum, 'deposit', { method: paymentMethod, transactionId: transaction_id });
       
-      // Update the existing 'pending' record if it exists, otherwise create a new 'approved' one
-      const pendingSnap = await db.collection('deposits')
+      // Update existing record: Query by userId only (no index needed) and filter in memory
+      const depositsSnap = await db.collection('deposits')
         .where('userId', '==', uid)
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .limit(1)
         .get();
 
-      if (!pendingSnap.empty) {
-        const docRef = pendingSnap.docs[0].ref;
+      // Find the latest pending record
+      const pendingDoc = depositsSnap.docs
+        .filter(d => d.data().status === 'pending')
+        .sort((a, b) => {
+          const aTime = a.data().createdAt?.toDate?.() || 0;
+          const bTime = b.data().createdAt?.toDate?.() || 0;
+          return bTime - aTime;
+        })[0];
+
+      if (pendingDoc) {
+        const docRef = pendingDoc.ref;
         await docRef.update({
           transactionId: transaction_id,
           method: paymentMethod,
@@ -179,7 +186,12 @@ const verifyDeposit = async (req, res, next) => {
       });
     }
   } catch (err) {
-    next(err);
+    console.error('[verifyDeposit] General Error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error during verification', 
+      debug: err.message // Send clear error message for diagnostics
+    });
   }
 };
 
