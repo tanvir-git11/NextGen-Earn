@@ -32,8 +32,9 @@
   <div id="toast" class="fixed top-5 right-5 z-[9999] hidden max-w-xs w-full"></div>
 
   <!-- ===== LOADING SPINNER ===== -->
-  <div id="loader" class="fixed inset-0 z-[9998] bg-gray-950/90 flex items-center justify-center hidden">
+  <div id="loader" class="fixed inset-0 z-[9998] bg-gray-950/90 flex flex-col items-center justify-center hidden">
     <div class="w-12 h-12 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+    <div id="loader-text" class="mt-4 text-xs font-medium text-gray-400 tracking-widest uppercase animate-pulse">Connecting to Server...</div>
   </div>
 
   <!-- ===== MODAL ===== -->

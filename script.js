@@ -48,9 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Normal Init ────────────────────────────────────────────────────────
   if (authToken && currentUser) {
-    showApp();
-    loadAppSettings();
-    loadDashboardData();
+    initApp();
   }
 
   // Pre-fill referral code from URL ?ref=XXXX
@@ -60,6 +58,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (refInput) refInput.value = refCode;
   }
 });
+
+// ===== APP INITIALIZATION (Handing Render Wake-up) =====
+async function initApp() {
+  const loader = document.getElementById('loader');
+  const loaderText = document.getElementById('loader-text');
+
+  if (loader) loader.classList.remove('hidden');
+  if (loaderText) loaderText.textContent = 'Connecting to Secure Server...';
+
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  while (attempts < maxAttempts) {
+    try {
+      console.log(`[Init] Wake-up attempt ${attempts + 1}...`);
+      // Try to fetch basic settings first as a wake-up call
+      await loadAppSettings();
+      
+      // If settings load, the server is awake
+      showApp();
+      await loadDashboardData();
+      
+      if (loader) loader.classList.add('hidden');
+      return; 
+    } catch (err) {
+      attempts++;
+      console.warn(`[Init] Server not ready (Attempt ${attempts}):`, err.message);
+      if (loaderText) loaderText.textContent = `Server is waking up... (Attempt ${attempts}/${maxAttempts})`;
+      
+      if (attempts >= maxAttempts) {
+        if (loaderText) loaderText.innerHTML = 'Server is taking too long to respond. <button onclick="location.reload()" class="underline text-purple-400">Retry</button>';
+        showToast('Connection slow. Please refresh the page.', 'error');
+        return;
+      }
+      // Wait 2 seconds before retry
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+}
 
 // ===== HELPERS =====
 const apiFetch = async (endpoint, options = {}) => {
@@ -444,7 +481,10 @@ async function loadDashboardData() {
     document.querySelectorAll('.user-ref-code').forEach(el => el.textContent = currentUser.referralCode);
     document.querySelectorAll('.user-balance').forEach(el => el.textContent = fmtMoney(wallet.balance));
 
-    // Referral link
+    // Hide loader if it was shown during init
+    hideLoader();
+
+    // ── Referral link ────────────────────────────────────────────────────────
     const refLinkEl = document.getElementById('ref-link');
     if (refLinkEl) refLinkEl.value = currentUser.referralCode;
 

@@ -15,6 +15,7 @@ const withdrawRoutes = require('./routes/withdrawRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const spinRoutes = require('./routes/spinRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const { startKeepAlive } = require('./utils/keepAlive');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -67,4 +68,5 @@ app.use((err, req, res, next) => {
 // ─── Start Server ─────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  startKeepAlive();
 });
