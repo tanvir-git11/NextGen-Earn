@@ -225,4 +225,55 @@ const getDepositHistory = async (req, res, next) => {
   }
 };
 
-module.exports = { checkoutDeposit, verifyDeposit, getDepositHistory };
+/**
+ * POST /api/deposit/manual
+ * Submits a manual deposit request (bKash/Nagad) for admin approval.
+ */
+const submitManualDeposit = async (req, res, next) => {
+  try {
+    const uid = req.uid;
+    const { amount, method, senderNumber, transactionId } = req.body;
+
+    if (!amount || !method || !senderNumber || !transactionId) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid amount' });
+    }
+
+    // Check for duplicate transaction ID
+    const dupCheck = await db.collection('deposits')
+      .where('transactionId', '==', transactionId.trim())
+      .limit(1)
+      .get();
+    
+    if (!dupCheck.empty) {
+      return res.status(409).json({ success: false, message: 'This Transaction ID has already been submitted' });
+    }
+
+    // Create pending deposit record
+    const depositRef = db.collection('deposits').doc();
+    await depositRef.set({
+      userId: uid,
+      amount: amountNum,
+      method: method.toLowerCase(),
+      senderNumber: senderNumber.trim(),
+      transactionId: transactionId.trim(),
+      status: 'pending',
+      type: 'manual',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'Deposit request submitted successfully! Please wait for admin approval.',
+      data: { id: depositRef.id }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { checkoutDeposit, verifyDeposit, getDepositHistory, submitManualDeposit };

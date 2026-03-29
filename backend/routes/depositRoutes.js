@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { checkoutDeposit, verifyDeposit, getDepositHistory } = require('../controllers/depositController');
+const { checkoutDeposit, verifyDeposit, getDepositHistory, submitManualDeposit } = require('../controllers/depositController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const blockedCheck = require('../middlewares/blockedCheck');
 const { depositValidators, handleValidationErrors } = require('../utils/validators');
@@ -10,6 +10,9 @@ router.post('/checkout', authMiddleware, blockedCheck, depositValidators, handle
 
 // POST /api/deposit/verify
 router.post('/verify', authMiddleware, blockedCheck, verifyDeposit);
+
+// POST /api/deposit/manual
+router.post('/manual', authMiddleware, blockedCheck, submitManualDeposit);
 
 // GET /api/deposit/history
 router.get('/history', authMiddleware, blockedCheck, getDepositHistory);

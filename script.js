@@ -131,6 +131,12 @@ const loadAppSettings = async () => {
 
     const wdInput = document.getElementById('wd-amount');
     if (wdInput) wdInput.min = appSettings.minWithdraw;
+
+    // Load payment numbers into UI
+    const bkashEl = document.getElementById('instr-bkash');
+    const nagadEl = document.getElementById('instr-nagad');
+    if (bkashEl) bkashEl.textContent = appSettings.bkashNumber || 'Not Set';
+    if (nagadEl) nagadEl.textContent = appSettings.nagadNumber || 'Not Set';
   } catch (err) {
     console.error('Failed to load settings:', err);
   }
@@ -601,6 +607,69 @@ async function upgradeLevel() {
     btn.innerHTML = originalHtml;
     btn.disabled = false;
   }
+}
+
+// ===== DEPOSIT TABS =====
+function switchDepositTab(tab) {
+  const autoSec = document.getElementById('deposit-auto-section');
+  const manSec = document.getElementById('deposit-manual-section');
+  const autoTab = document.getElementById('dep-tab-auto');
+  const manTab = document.getElementById('dep-tab-manual');
+
+  if (tab === 'auto') {
+    autoSec.classList.remove('hidden');
+    manSec.classList.add('hidden');
+    autoTab.classList.add('tab-active');
+    autoTab.classList.remove('text-gray-400');
+    manTab.classList.remove('tab-active');
+    manTab.classList.add('text-gray-400');
+  } else {
+    autoSec.classList.add('hidden');
+    manSec.classList.remove('hidden');
+    manTab.classList.add('tab-active');
+    manTab.classList.remove('text-gray-400');
+    autoTab.classList.remove('tab-active');
+    autoTab.classList.add('text-gray-400');
+  }
+}
+
+// ===== MANUAL DEPOSIT =====
+async function handleManualDeposit(e) {
+  e.preventDefault();
+  const amount = document.getElementById('man-amount').value;
+  const method = document.getElementById('man-method').value;
+  const senderNumber = document.getElementById('man-sender').value.trim();
+  const transactionId = document.getElementById('man-trxid').value.trim();
+
+  if (!amount || !method || !senderNumber || !transactionId) {
+    showToast('Please fill all fields', 'error');
+    return;
+  }
+
+  showLoader();
+  try {
+    const res = await apiFetch('/deposit/manual', {
+      method: 'POST',
+      body: JSON.stringify({ amount, method, senderNumber, transactionId })
+    });
+    showToast(res.message, 'success');
+    e.target.reset();
+    await loadDashboardData();
+    navigate('wallet');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
+function copyToClipboard(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Number copied! 📋', 'success');
+  }).catch(() => {
+    showToast('Failed to copy', 'error');
+  });
 }
 
 // ===== RENDER TRANSACTIONS =====

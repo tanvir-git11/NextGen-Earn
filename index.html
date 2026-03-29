@@ -644,27 +644,95 @@
         <div id="page-deposit" class="page-content hidden space-y-5">
           <button onclick="navigate('wallet')"
             class="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition">← Back to Wallet</button>
-          <div class="glass rounded-2xl p-5 border border-blue-500/30">
-            <h4 class="font-semibold text-blue-400 mb-2">Payment Instructions</h4>
-            <ul class="text-sm text-gray-400 space-y-2">
-              <li>1. Enter the amount you want to deposit.</li>
-              <li>2. Click "Pay Now" to proceed to the secure payment gateway.</li>
-              <li>3. Complete the payment using your preferred method (bKash/Nagad/Rocket).</li>
-              <li>4. Your balance will be credited automatically!</li>
-            </ul>
+
+          <!-- Tab Selection -->
+          <div class="glass rounded-2xl p-1 flex gap-1 mb-4">
+            <button onclick="switchDepositTab('auto')" id="dep-tab-auto"
+              class="flex-1 py-3 rounded-xl text-sm font-bold transition tab-active">Automatic Pay</button>
+            <button onclick="switchDepositTab('manual')" id="dep-tab-manual"
+              class="flex-1 py-3 rounded-xl text-sm font-bold transition text-gray-400">Manual Pay</button>
           </div>
-          <form onsubmit="handleDeposit(event)" class="glass rounded-2xl p-5 space-y-4">
-            <div class="input-group">
-              <div class="flex justify-between items-center mb-1">
-                <label class="input-label mb-0">Amount (BDT)</label>
-                <span id="dep-min-text" class="text-[10px] text-gray-500 font-mono">Min: ৳100</span>
-              </div>
-              <input type="number" id="dep-amount" placeholder="1000" min="100" class="input-field" required />
+
+          <!-- Auto Pay Section -->
+          <div id="deposit-auto-section" class="space-y-5">
+            <div class="glass rounded-2xl p-5 border border-blue-500/30">
+              <h4 class="font-semibold text-blue-400 mb-2">Automatic Payment (RupantorPay)</h4>
+              <ul class="text-sm text-gray-400 space-y-2">
+                <li>1. Enter the amount and click "Pay Now".</li>
+                <li>2. Complete payment via bKash/Nagad on the secure gateway.</li>
+                <li>3. Balance will be credited <span class="text-green-400 font-bold">instantly</span>.</li>
+              </ul>
             </div>
-            <button type="submit"
-              class="btn-primary w-full shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_4px_25px_rgba(168,85,247,0.6)]">Pay
-              Now</button>
-          </form>
+            <form onsubmit="handleDeposit(event)" class="glass rounded-2xl p-5 space-y-4">
+              <div class="input-group">
+                <div class="flex justify-between items-center mb-1">
+                  <label class="input-label mb-0">Amount (BDT)</label>
+                  <span class="text-[10px] text-gray-500 font-mono dep-min-text">Min: ৳100</span>
+                </div>
+                <input type="number" id="dep-amount" placeholder="1000" min="100" class="input-field" required />
+              </div>
+              <button type="submit"
+                class="btn-primary w-full shadow-[0_4px_20px_rgba(168,85,247,0.4)] hover:shadow-[0_4px_25px_rgba(168,85,247,0.6)]">Pay
+                Now</button>
+            </form>
+          </div>
+
+          <!-- Manual Pay Section -->
+          <div id="deposit-manual-section" class="hidden space-y-5">
+            <div class="glass rounded-2xl p-6 border border-purple-500/30 relative overflow-hidden">
+              <div class="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
+              <h4 class="font-bold text-purple-400 mb-4 uppercase text-[10px] tracking-widest relative z-10">Manual Payment Instructions</h4>
+              <div class="space-y-3 relative z-10">
+                <div class="flex items-center justify-between bg-gray-950/40 p-4 rounded-2xl border border-white/5">
+                  <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-black tracking-tighter">bKash Personal</p>
+                    <p class="text-lg font-black text-white" id="instr-bkash">01XXXXXXXXX</p>
+                  </div>
+                  <button onclick="copyToClipboard('instr-bkash')" class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 hover:bg-purple-500 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-8a2 2 0 01-2-2h-8a2 2 0 01-2 2v8a2 2 0 012 2z"/></svg>
+                  </button>
+                </div>
+                <div class="flex items-center justify-between bg-gray-950/40 p-4 rounded-2xl border border-white/5">
+                  <div>
+                    <p class="text-[10px] text-gray-500 uppercase font-black tracking-tighter">Nagad Personal</p>
+                    <p class="text-lg font-black text-white" id="instr-nagad">01XXXXXXXXX</p>
+                  </div>
+                  <button onclick="copyToClipboard('instr-nagad')" class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 hover:bg-purple-500 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-8a2 2 0 01-2-2h-8a2 2 0 01-2 2v8a2 2 0 012 2z"/></svg>
+                  </button>
+                </div>
+                <p class="text-[10px] text-blue-400/80 leading-relaxed italic bg-blue-500/5 p-3 rounded-xl border border-blue-500/10">
+                  * Send the amount to any of the numbers above via Send Money. Then fill out the form below with your transaction details. Admin will approve your deposit within 1-12 hours.
+                </p>
+              </div>
+            </div>
+
+            <form onsubmit="handleManualDeposit(event)" class="glass rounded-2xl p-6 space-y-4 border border-white/5">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                  <label class="input-label">Method</label>
+                  <select id="man-method" class="input-field" required>
+                    <option value="bkash">bKash</option>
+                    <option value="nagad">Nagad</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label class="input-label">Amount</label>
+                  <input type="number" id="man-amount" placeholder="1000" class="input-field" required />
+                </div>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Your Phone Number (Sender)</label>
+                <input type="text" id="man-sender" placeholder="01XXXXXXXXX" class="input-field" required />
+              </div>
+              <div class="input-group">
+                <label class="input-label">Transaction ID (TrxID)</label>
+                <input type="text" id="man-trxid" placeholder="8X21..." class="input-field" required />
+              </div>
+              <button type="submit" class="btn-primary w-full py-4 font-black shadow-[0_10px_20px_rgba(168,85,247,0.3)]">Confirm Deposit Request</button>
+            </form>
+          </div>
+
           <!-- Deposit History -->
           <div class="glass rounded-2xl p-5">
             <h4 class="font-semibold mb-4">Deposit History</h4>
