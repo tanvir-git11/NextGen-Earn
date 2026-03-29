@@ -462,8 +462,11 @@
       <tr class="hover:bg-white/3 transition">
         <td class="px-4 py-3">
           <p class="font-medium">${u.name}</p>
-          <p class="text-gray-500 text-xs">${u.email}</p>
-          <p class="text-gray-600 text-xs font-mono">${u.uid.slice(0, 12)}...</p>
+          <div class="flex flex-col gap-0.5 mt-0.5">
+            <p class="text-[10px] text-purple-400 font-bold tracking-tight">ID: ${u.userId || u.referralCode || 'N/A'}</p>
+            <p class="text-gray-500 text-[10px]">${u.email}</p>
+            <p class="text-[10px] text-gray-700 font-mono">${u.uid.slice(0, 10)}...</p>
+          </div>
         </td>
         <td class="px-4 py-3 font-mono text-purple-400 text-xs">${u.referralCode}</td>
         <td class="px-4 py-3">${u.plan > 0 ? `<span class="text-green-400 font-bold">৳${u.plan}</span>` : '<span class="text-gray-500">None</span>'}</td>

@@ -60,6 +60,7 @@ const getAllUsers = async (req, res, next) => {
       const data = doc.data();
       return {
         uid: doc.id,
+        userId: data.userId || data.referralCode, // Support both
         name: data.name,
         email: data.email,
         referralCode: data.referralCode,
@@ -77,8 +78,10 @@ const getAllUsers = async (req, res, next) => {
       const term = search.toLowerCase();
       users = users.filter((u) => 
         (u.email && u.email.toLowerCase().includes(term)) || 
-        (u.referralCode && u.referralCode.toLowerCase().includes(term)) ||
-        (u.name && u.name.toLowerCase().includes(term))
+        (u.referralCode && String(u.referralCode).toLowerCase().includes(term)) ||
+        (u.userId && String(u.userId).toLowerCase().includes(term)) ||
+        (u.name && u.name.toLowerCase().includes(term)) ||
+        (u.uid && u.uid.toLowerCase().includes(term))
       );
     }
 
