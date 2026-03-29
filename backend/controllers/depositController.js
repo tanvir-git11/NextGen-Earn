@@ -93,7 +93,8 @@ const verifyDeposit = async (req, res, next) => {
       method: 'POST',
       headers: {
         'X-API-KEY': process.env.RUPANTOR_API_KEY || '',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CLIENT': 'nextgenearn.shop'
       },
       body: data
     });
@@ -135,16 +136,37 @@ const verifyDeposit = async (req, res, next) => {
       // Safe: Transaction valid, not duplicate, let's credit
       await creditBalance(uid, amountNum, 'deposit', { method: paymentMethod, transactionId: transaction_id });
       
-      // Save it explicitly as a deposit record so it appears in deposit history
-      const depositRef = db.collection('deposits').doc();
-      await depositRef.set({
-        userId: uid,
-        method: paymentMethod,
-        transactionId: transaction_id,
-        amount: amountNum,
-        status: 'approved', // Auto-approved
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      // Update the existing 'pending' record if it exists, otherwise create a new 'approved' one
+      const pendingSnap = await db.collection('deposits')
+        .where('userId', '==', uid)
+        .where('status', '==', 'pending')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
+
+      if (!pendingSnap.empty) {
+        const docRef = pendingSnap.docs[0].ref;
+        await docRef.update({
+          transactionId: transaction_id,
+          method: paymentMethod,
+          amount: amountNum, 
+          status: 'approved',
+          verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        console.log(`[verifyDeposit] Updated existing record: ${docRef.id}`);
+      } else {
+        // Fallback: create new record if no pending found
+        const depositRef = db.collection('deposits').doc();
+        await depositRef.set({
+          userId: uid,
+          method: paymentMethod,
+          transactionId: transaction_id,
+          amount: amountNum,
+          status: 'approved',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log(`[verifyDeposit] Created new record: ${depositRef.id}`);
+      }
       
       return res.status(200).json({ success: true, message: 'Payment verified successfully. Balance added.', amount: amountNum });
     } else {

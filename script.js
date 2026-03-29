@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Handle RupantorPay return ──────────────────────────────────────────
   const paymentStatus = urlParams.get('payment');
-  const txId = urlParams.get('transaction_id');
+  const txId = urlParams.get('transaction_id') || urlParams.get('trx_id');
 
   if (paymentStatus === 'success' && txId && authToken) {
     if (document.getElementById('loader')) document.getElementById('loader').classList.remove('hidden');
