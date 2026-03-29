@@ -1,4 +1,4 @@
-const axios = require('axios');
+const fetch = require('node-fetch');
 
 /**
  * Pings the server periodically to prevent Render from sleeping.
@@ -29,7 +29,7 @@ const ping = async (url) => {
     const start = Date.now();
     // Ping the status endpoint or root
     const statusUrl = `${url.replace(/\/$/, '')}/status`;
-    const res = await axios.get(statusUrl);
+    const res = await fetch(statusUrl);
     const duration = Date.now() - start;
     console.log(`[Keep-Alive] Ping successful: ${res.status} (${duration}ms)`);
   } catch (err) {

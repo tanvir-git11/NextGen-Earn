@@ -4,7 +4,7 @@
    API Base: http://localhost:5500/api
    ========================================== */
 
-const API = 'https://nextgen-earn.onrender.com/api'; 
+const API = 'https://nextgen-earn.onrender.com/api';
 
 // ===== STATE =====
 let currentPage = 'dashboard';
@@ -75,18 +75,18 @@ async function initApp() {
       console.log(`[Init] Wake-up attempt ${attempts + 1}...`);
       // Try to fetch basic settings first as a wake-up call
       await loadAppSettings();
-      
+
       // If settings load, the server is awake
       showApp();
       await loadDashboardData();
-      
+
       if (loader) loader.classList.add('hidden');
-      return; 
+      return;
     } catch (err) {
       attempts++;
       console.warn(`[Init] Server not ready (Attempt ${attempts}):`, err.message);
       if (loaderText) loaderText.textContent = `Server is waking up... (Attempt ${attempts}/${maxAttempts})`;
-      
+
       if (attempts >= maxAttempts) {
         if (loaderText) loaderText.innerHTML = 'Server is taking too long to respond. <button onclick="location.reload()" class="underline text-purple-400">Retry</button>';
         showToast('Connection slow. Please refresh the page.', 'error');

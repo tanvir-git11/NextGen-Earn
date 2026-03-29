@@ -1,10 +1,10 @@
 const { db, admin } = require('../firebase/firebaseAdmin');
 const { distributeCommission } = require('../services/commissionService');
+const { upgradeUserLevel } = require('../services/levelService');
 
 /**
  * POST /api/plan/buy
- * Checks balance → deducts plan amount → activates plan → distributes commissions.
- * Returns 402 with code INSUFFICIENT_BALANCE if user cannot afford the plan.
+ * Supports both 1000 (Basic) and 2000 (Premium) plans.
  */
 const buyPlan = async (req, res, next) => {
   try {
@@ -12,10 +12,10 @@ const buyPlan = async (req, res, next) => {
     const { plan } = req.body;
     const planAmount = parseInt(plan, 10);
 
-    if (planAmount !== 1000) {
+    if (planAmount !== 1000 && planAmount !== 2000) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid plan. Only the 1000 BDT plan is available.',
+        message: 'Invalid plan. Choose either 1000 or 2000 BDT.',
       });
     }
 
@@ -23,7 +23,6 @@ const buyPlan = async (req, res, next) => {
     const userDoc = await userRef.get();
     const userData = userDoc.data();
 
-    // ── Prevent re-purchasing the same plan ─────────────────────────────────
     if (userData.plan === planAmount) {
       return res.status(400).json({
         success: false,
@@ -31,7 +30,6 @@ const buyPlan = async (req, res, next) => {
       });
     }
 
-    // ── Prevent downgrading plan ─────────────────────────────────────────────
     if (userData.plan > planAmount) {
       return res.status(400).json({
         success: false,
@@ -39,22 +37,15 @@ const buyPlan = async (req, res, next) => {
       });
     }
 
-    // ── Check balance ────────────────────────────────────────────────────────
     const currentBalance = userData.balance || 0;
     if (currentBalance < planAmount) {
       return res.status(402).json({
         success: false,
         code: 'INSUFFICIENT_BALANCE',
-        message: `Insufficient balance! You need ৳${planAmount} but have ৳${currentBalance}. Please deposit ৳${planAmount - currentBalance} first.`,
-        data: {
-          required: planAmount,
-          available: currentBalance,
-          shortfall: planAmount - currentBalance,
-        },
+        message: `Insufficient balance! You need ৳${planAmount} but have ৳${currentBalance.toLocaleString()}.`,
       });
     }
 
-    // ── Deduct balance + activate plan (atomic batch) ────────────────────────
     const batch = db.batch();
     batch.update(userRef, {
       plan: planAmount,
@@ -62,10 +53,9 @@ const buyPlan = async (req, res, next) => {
       balance: admin.firestore.FieldValue.increment(-planAmount),
     });
 
-    // Record plan purchase in transactions
     const txRef = db.collection('transactions').doc();
     batch.set(txRef, {
-      userId: userData.userId || uid, // Use numeric userId
+      userId: uid,
       type: 'plan_purchase',
       amount: -planAmount,
       status: 'completed',
@@ -75,12 +65,12 @@ const buyPlan = async (req, res, next) => {
 
     await batch.commit();
 
-    // ── Distribute commissions to referral chain ─────────────────────────────
-    await distributeCommission(uid, planAmount);
+    // Trigger asynchronous commission distribution
+    distributeCommission(uid, planAmount).catch(console.error);
 
     return res.json({
       success: true,
-      message: `Plan ${planAmount} activated! ৳${planAmount} deducted from your balance.`,
+      message: `Plan ${planAmount} activated successfully!`,
       data: { plan: planAmount, deducted: planAmount },
     });
   } catch (err) {
@@ -89,65 +79,43 @@ const buyPlan = async (req, res, next) => {
 };
 
 /**
- * POST /api/plan/upgrade
- * Upgrades the user's level if they have enough balance for the fee.
+ * POST /api/level/upgrade
+ * Upgrades the user's level for a flat 1500 BDT fee.
  */
-const upgradePlan = async (req, res, next) => {
+const upgradeLevel = async (req, res, next) => {
   try {
     const uid = req.uid;
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    const userDoc = await db.collection('users').doc(uid).get();
     const userData = userDoc.data();
 
-    const currentLevel = userData.level || 1;
-    
-    const LEVELS = {
-      1: { fee: 1500, nextLevel: 2 },
-      2: { fee: 3000, nextLevel: 3 },
-      3: { fee: 5000, nextLevel: 4 },
-      4: { fee: 10000, nextLevel: 5 },
-      5: { fee: 0, nextLevel: null }
-    };
-
-    if (currentLevel >= 5) {
-      return res.status(400).json({ success: false, message: 'You are already at the maximum level.' });
-    }
-
-    const { fee, nextLevel } = LEVELS[currentLevel];
-
-    if (userData.balance < fee) {
-      return res.status(402).json({
+    if (userData.plan === 0) {
+      return res.status(400).json({
         success: false,
-        message: `Insufficient balance to upgrade to Level ${nextLevel}. You need ৳${fee}.`
+        message: 'You must buy a plan first before upgrading your level.',
       });
     }
 
-    const batch = db.batch();
-    batch.update(userRef, {
-      level: nextLevel,
-      balance: admin.firestore.FieldValue.increment(-fee),
-    });
+    // Only Premium plan users can use the level system fully (as requested)
+    if (userData.plan < 2000) {
+      return res.status(403).json({
+        success: false,
+        message: 'Level upgrades are only available for Premium Plan (2000 BDT).',
+      });
+    }
 
-    const txRef = db.collection('transactions').doc();
-    batch.set(txRef, {
-      userId: userData.userId || uid,
-      type: 'level_upgrade',
-      amount: -fee,
-      status: 'completed',
-      meta: { fromLevel: currentLevel, toLevel: nextLevel },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await batch.commit();
+    const result = await upgradeUserLevel(uid, 1500);
 
     return res.json({
       success: true,
-      message: `Successfully upgraded to Level ${nextLevel}! ৳${fee} deducted.`,
-      data: { level: nextLevel, deducted: fee }
+      message: `Successfully upgraded to Level ${result.newLevel}! ৳1,500 deducted.`,
+      data: { level: result.newLevel, deducted: 1500 }
     });
   } catch (err) {
+    if (err.message.includes('Already at maximum') || err.message.includes('Insufficient balance')) {
+      return res.status(400).json({ success: false, message: err.message });
+    }
     next(err);
   }
 };
 
-module.exports = { buyPlan, upgradePlan };
+module.exports = { buyPlan, upgradeLevel };

@@ -163,4 +163,31 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { getProfile, getReferrals, buildReferralTree, getReferrerProfile, updateProfile };
+/**
+ * GET /api/user/level
+ * Returns the current configuration and level of the user.
+ */
+const getUserLevel = async (req, res, next) => {
+  try {
+    const uid = req.uid;
+    const userDoc = await db.collection('users').doc(uid).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const data = userDoc.data();
+    return res.json({
+      success: true,
+      data: {
+        level: data.level || 1,
+        plan: data.plan || 0,
+        userId: data.userId
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getProfile, getReferrals, buildReferralTree, getReferrerProfile, updateProfile, getUserLevel };
