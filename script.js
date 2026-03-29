@@ -129,14 +129,53 @@ const loadAppSettings = async () => {
     const depInput = document.getElementById('dep-amount');
     if (depInput) depInput.min = appSettings.minDeposit;
 
-    const wdInput = document.getElementById('wd-amount');
-    if (wdInput) wdInput.min = appSettings.minWithdraw;
+    // Update balance and Level
+    const balancePrice = document.querySelectorAll('.user-balance');
+    balancePrice.forEach(el => el.textContent = `৳${(s.balance || 0).toLocaleString()}`);
+    
+    // Global User Plan & Level
+    const userPlan = s.plan || 0;
+    const userLevel = s.level || 1;
+    const directRefs = s.directRefCount || 0;
+
+    // Plans Section Visibility
+    const planSelection = document.getElementById('plan-selection-container');
+    const upgradeCard = document.getElementById('level-upgrade-card');
+    const plansSubtitle = document.getElementById('plans-subtitle');
+
+    if (userPlan === 0) {
+      planSelection.style.display = 'block';
+      upgradeCard.style.display = 'none';
+      plansSubtitle.textContent = 'Choose a plan to start your journey.';
+    } else if (userPlan === 1000) {
+      // Basic plan: Show only 2000 plan for "Level 1" users who want to upgrade to Premium
+      planSelection.style.display = 'block';
+      document.getElementById('starter-plan-card').style.display = 'none'; // Hide starter
+      upgradeCard.style.display = 'none';
+      plansSubtitle.textContent = 'Upgrade to NextGen Elite for 5-generation earnings.';
+    } else {
+      // Premium plan: Show Level Upgrade UI
+      planSelection.style.display = 'none';
+      upgradeCard.style.display = 'block';
+      plansSubtitle.textContent = 'Track your milestones and upgrade your level.';
+      updateUpgradeUI(userLevel, directRefs);
+    }
 
     // Load payment numbers into UI
     const bkashEl = document.getElementById('instr-bkash');
     const nagadEl = document.getElementById('instr-nagad');
     if (bkashEl) bkashEl.textContent = appSettings.bkashNumber || 'Not Set';
     if (nagadEl) nagadEl.textContent = appSettings.nagadNumber || 'Not Set';
+
+    // Handle auto-payment disabled overlay visibility
+    const autoOverlay = document.getElementById('auto-pay-disabled-overlay');
+    if (autoOverlay) {
+      if (appSettings.isAutoPaymentEnabled === false) {
+        autoOverlay.classList.remove('hidden');
+      } else {
+        autoOverlay.classList.add('hidden');
+      }
+    }
   } catch (err) {
     console.error('Failed to load settings:', err);
   }
@@ -609,19 +648,99 @@ async function upgradeLevel() {
   }
 }
 
-// ===== DEPOSIT TABS =====
-function switchDepositTab(tab) {
-  if (tab === 'auto' && appSettings.isAutoPaymentEnabled === false) {
-    // Show required Bangla popup/alert
-    alert("কিছু যান্ত্রিক ত্রুটির জন্য অটোমেটিক পেমেন্ট বন্ধ আছে। দয়া করে ম্যানুয়ালি পেমেন্ট করুন, ৫ থেকে ১০ মিনিটের ভেতর অ্যাপ্রুভ হবে।");
-    switchDepositTab('manual');
+async function buyPlan(plan) {
+  if (!confirm(`Are you sure you want to activate the ৳${plan} plan?`)) return;
+
+  showLoader();
+  try {
+    const res = await apiFetch('/plan/buy', {
+      method: 'POST',
+      body: JSON.stringify({ plan })
+    });
+    showToast(res.message, 'success');
+    await loadDashboardData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
+function updateUpgradeUI(level, refs) {
+  const badge = document.getElementById('lvl-badge');
+  const progressBar = document.getElementById('refs-progress-bar');
+  const currentRefsEl = document.getElementById('current-refs-count');
+  const maxRefsEl = document.getElementById('max-refs-count');
+  const nextLvlNumEl = document.getElementById('next-lvl-num');
+  const btnUpgrade = document.getElementById('btn-upgrade-level');
+  const warningText = document.getElementById('upgrade-warning-text');
+  const benefitsList = document.getElementById('benefits-list');
+  const upgradeDesc = document.getElementById('upgrade-desc');
+
+  badge.textContent = `Level ${level}`;
+  currentRefsEl.textContent = refs;
+
+  const nextLevel = level + 1;
+  const targets = { 2: 8, 3: 20, 4: 40, 5: 75 };
+  const target = targets[nextLevel] || 0;
+
+  if (level >= 5) {
+    document.getElementById('upgrade-status-badge').textContent = 'MAX LEVEL REACHED';
+    document.getElementById('upgrade-title').textContent = 'Unlimited Tier';
+    document.getElementById('upgrade-fee-section').style.display = 'none';
+    progressBar.style.width = '100%';
+    maxRefsEl.textContent = '∞';
+    btnUpgrade.style.display = 'none';
     return;
   }
-  
+
+  maxRefsEl.textContent = target;
+  nextLvlNumEl.textContent = nextLevel;
+  upgradeDesc.textContent = `Premium Benefits for Level ${nextLevel}`;
+
+  const progress = Math.min((refs / target) * 100, 100);
+  progressBar.style.width = `${progress}%`;
+
+  // Update Benefits display based on next level
+  const nextComm = nextLevel * 5;
+  benefitsList.innerHTML = `
+    <li class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Increase Indirect Commission to ${nextComm}%</li>
+    <li class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Boost Withdrawal Limit Priority</li>
+  `;
+
+  if (refs >= target) {
+    btnUpgrade.disabled = false;
+    warningText.classList.remove('hidden');
+    document.getElementById('upgrade-status-text').classList.add('hidden');
+  } else {
+    btnUpgrade.disabled = true;
+    warningText.classList.add('hidden');
+    document.getElementById('upgrade-status-text').classList.remove('hidden');
+  }
+}
+
+async function upgradeLevel() {
+  if (!confirm('Upgrade level for ৳1,500? This will boost your commission rates.')) return;
+
+  showLoader();
+  try {
+    const res = await apiFetch('/level/upgrade', { method: 'POST' });
+    showToast(res.message, 'success');
+    await loadDashboardData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
+// ===== DEPOSIT TABS =====
+function switchDepositTab(tab) {
   const autoSec = document.getElementById('deposit-auto-section');
   const manSec = document.getElementById('deposit-manual-section');
   const autoTab = document.getElementById('dep-tab-auto');
   const manTab = document.getElementById('dep-tab-manual');
+  const autoOverlay = document.getElementById('auto-pay-disabled-overlay');
 
   if (tab === 'auto') {
     autoSec.classList.remove('hidden');
@@ -630,6 +749,11 @@ function switchDepositTab(tab) {
     autoTab.classList.remove('text-gray-400');
     manTab.classList.remove('tab-active');
     manTab.classList.add('text-gray-400');
+    
+    // Show overlay if disabled
+    if (appSettings.isAutoPaymentEnabled === false && autoOverlay) {
+      autoOverlay.classList.remove('hidden');
+    }
   } else {
     autoSec.classList.add('hidden');
     manSec.classList.remove('hidden');
@@ -637,6 +761,9 @@ function switchDepositTab(tab) {
     manTab.classList.remove('text-gray-400');
     autoTab.classList.remove('tab-active');
     autoTab.classList.add('text-gray-400');
+    
+    // Always hide overlay on manual tab
+    if (autoOverlay) autoOverlay.classList.add('hidden');
   }
 }
 

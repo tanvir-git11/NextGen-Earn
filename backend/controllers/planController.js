@@ -110,8 +110,12 @@ const upgradeLevel = async (req, res, next) => {
       message: `Successfully upgraded to Level ${result.newLevel}! ৳1,500 deducted.`,
       data: { level: result.newLevel, deducted: 1500 }
     });
-  } catch (err) {
-    if (err.message.includes('Already at maximum') || err.message.includes('Insufficient balance')) {
+    } catch (err) {
+    if (
+      err.message.includes('Already at maximum') || 
+      err.message.includes('Insufficient Balance') || 
+      err.message.includes('Referral Milestone Required')
+    ) {
       return res.status(400).json({ success: false, message: err.message });
     }
     next(err);

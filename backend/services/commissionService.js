@@ -37,27 +37,30 @@ const distributeCommission = async (buyerUid, planAmount) => {
       const parentData = parentDoc.data();
 
       if (!parentData.isBlocked) {
-        await creditUserCommission(parentUid, directCommissionAmount, buyerUid, buyerData.userId, planAmount, 0);
+        // Direct parent always gets 50% regardless of plan amount (1000 or 2000)
+        // AND we increment their directRefCount to facilitate their level upgrades
+        await creditUserCommission(parentUid, directCommissionAmount, buyerUid, buyerData.userId, planAmount, 0, true);
         console.log(`[Commission] Direct 50% (${directCommissionAmount} BDT) → parent ${parentUid}`);
       }
     }
 
     // 2. Extra Generation System for Premium (2000 plan)
     if (planAmount === 2000) {
-      const upline = await getUplineChain(buyerUid, 5); // Fetch up to 5 generations
+      // Find upline up to 5 generations, EXCLUDING the direct parent (already processed above)
+      const upline = await getUplineChain(buyerUid, 5); 
 
       for (const uplineUser of upline) {
-        // Skip direct parent if already credited (already handled in batch below or just check)
-        // Actually, direct referrer and upline are separate roles in the user's logic requirements
-        
-        // Rule: Only premium users (2000 plan) can earn from the 5-generation level system
+        // Skip direct parent (Gen 1) as they already received the 50% flat commission
+        if (uplineUser.generation <= 1) continue;
+
+        // Rule: Only premium users (2000 plan) can earn from the 5-generation system (Gen 2-5)
         if (uplineUser.plan !== 2000) continue;
         if (uplineUser.isBlocked) continue;
 
         const commissionAmount = calculateLevelCommission(uplineUser.level, planAmount);
         
         if (commissionAmount > 0) {
-          await creditUserCommission(uplineUser.uid, commissionAmount, buyerUid, buyerData.userId, planAmount, uplineUser.generation);
+          await creditUserCommission(uplineUser.uid, commissionAmount, buyerUid, buyerData.userId, planAmount, uplineUser.generation, false);
           console.log(`[Commission] Generation ${uplineUser.generation} (${commissionAmount} BDT) → upline ${uplineUser.uid}`);
         }
       }
@@ -71,24 +74,31 @@ const distributeCommission = async (buyerUid, planAmount) => {
 /**
  * Credits a user with commission and logs the transaction.
  */
-const creditUserCommission = async (recipientUid, amount, sourceUid, sourceUserId, planAmount, generation) => {
+const creditUserCommission = async (recipientUid, amount, sourceUid, sourceUserId, planAmount, generation, isDirect = false) => {
   const batch = db.batch();
   const recipientRef = db.collection('users').doc(recipientUid);
   
-  batch.update(recipientRef, {
+  const updates = {
     balance: admin.firestore.FieldValue.increment(amount),
     totalEarnings: admin.firestore.FieldValue.increment(amount),
-    availableSpins: admin.firestore.FieldValue.increment(12), // awarding spins per referral activation
-  });
+    availableSpins: admin.firestore.FieldValue.increment(12),
+  };
+
+  // If this is a direct referral, increment their ref count for level progression
+  if (isDirect) {
+    updates.directRefCount = admin.firestore.FieldValue.increment(1);
+  }
+
+  batch.update(recipientRef, updates);
 
   const txRef = db.collection('transactions').doc();
   batch.set(txRef, {
-    userId: recipientUid, // Note: Existing code uses UID here sometimes, but prompt says userId
+    userId: recipientUid,
     type: 'commission',
     amount: amount,
     status: 'approved',
-    sourceUserId: sourceUserId, // From prompt requirement: sourceUserId
-    generation: generation, // generation 0 = direct
+    sourceUserId: sourceUserId,
+    generation: generation, 
     meta: {
       fromUserUid: sourceUid,
       fromUserId: sourceUserId,
