@@ -118,7 +118,9 @@ const verifyDeposit = async (req, res, next) => {
       result.data?.status === 'SUCCESS' ||
       result.data?.status === 'COMPLETED';
 
-    const paymentMethod = 'rupantorpay';
+    // Extract the actual payment method (bkash/nagad/etc) from gateway response
+    const gatewayMethod = result.method || result.data?.method || result.payment_type || result.data?.payment_type || result.type || 'Deposit';
+    const paymentMethod = gatewayMethod === 'Deposit' ? 'RupantorPay' : gatewayMethod;
 
     if (isSuccess) {
       // Find amount (could be result.amount, result.data.amount, or result.received_amount)

@@ -562,7 +562,11 @@ function renderActivityList(txList) {
     const icon = tx.type === 'commission' ? '💰' : tx.type === 'deposit' ? '📥' : tx.type === 'plan_purchase' ? '🛒' : '📤';
     const color = positive ? 'text-green-400' : 'text-red-400';
     const statusColor = tx.status === 'approved' ? 'text-green-500' : tx.status === 'rejected' ? 'text-red-500' : 'text-yellow-500';
-    const desc = tx.type === 'commission' ? `Level ${tx.meta?.level || ''} Commission` : tx.type === 'deposit' ? `${tx.meta?.method || 'Deposit'} Deposit` : tx.type === 'plan_purchase' ? `Bought ${tx.meta?.plan || ''} Plan` : `Withdrawal`;
+    const getMethod = (m) => {
+      if (!m || m.toLowerCase() === 'rupantorpay') return 'Deposit';
+      return m.charAt(0).toUpperCase() + m.slice(1);
+    };
+    const desc = tx.type === 'commission' ? `Level ${tx.meta?.level || ''} Commission` : tx.type === 'deposit' ? `${getMethod(tx.meta?.method)} Deposit` : tx.type === 'plan_purchase' ? `Bought ${tx.meta?.plan || ''} Plan` : `Withdrawal`;
     return `
       <div class="activity-item">
         <div class="w-9 h-9 rounded-xl bg-gray-700/60 flex items-center justify-center text-base flex-shrink-0">${icon}</div>
@@ -613,7 +617,11 @@ function renderTransactions(txList) {
     const positive = tx.amount > 0;
     const icon = tx.type === 'commission' ? '💰' : tx.type === 'deposit' ? '📥' : tx.type === 'plan_purchase' ? '🛒' : '📤';
     const color = positive ? 'text-green-400' : 'text-red-400';
-    const desc = tx.type === 'commission' ? `Level ${tx.meta?.level || ''} Commission` : tx.type === 'deposit' ? `Deposit via ${tx.meta?.method || ''}` : tx.type === 'plan_purchase' ? `Bought ${tx.meta?.plan || ''} Plan` : `Withdrawal via ${tx.meta?.method || ''}`;
+    const getMethod = (m) => {
+      if (!m || m.toLowerCase() === 'rupantorpay') return 'RupantorPay';
+      return m.charAt(0).toUpperCase() + m.slice(1);
+    };
+    const desc = tx.type === 'commission' ? `Level ${tx.meta?.level || ''} Commission` : tx.type === 'deposit' ? `Deposit via ${getMethod(tx.meta?.method)}` : tx.type === 'plan_purchase' ? `Bought ${tx.meta?.plan || ''} Plan` : `Withdrawal via ${tx.meta?.method || ''}`;
     return `
       <div class="tx-item">
         <div class="flex items-center gap-3 flex-1 min-w-0">
