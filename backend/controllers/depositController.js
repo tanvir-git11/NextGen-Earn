@@ -76,19 +76,21 @@ const checkoutDeposit = async (req, res, next) => {
 const verifyDeposit = async (req, res, next) => {
   try {
     const uid = req.uid;
-    const { transaction_id } = req.body;
-    if (!transaction_id) {
+    const { transaction_id, transactionId } = req.body;
+    const txid = transaction_id || transactionId;
+
+    if (!txid) {
       return res.status(400).json({ success: false, message: 'Missing transaction ID' });
     }
 
     // 1. Check if already processed
-    const dupCheck = await db.collection('deposits').where('transactionId', '==', transaction_id).limit(1).get();
+    const dupCheck = await db.collection('deposits').where('transactionId', '==', txid).limit(1).get();
     if (!dupCheck.empty) {
       return res.status(409).json({ success: false, message: 'Transaction already verified and credited' });
     }
 
     // 2. Call RupantorPay verify API
-    const data = JSON.stringify({ transaction_id });
+    const data = JSON.stringify({ transaction_id: txid });
     const response = await fetch('https://payment.rupantorpay.com/api/payment/verify-payment', {
       method: 'POST',
       headers: {
@@ -137,7 +139,7 @@ const verifyDeposit = async (req, res, next) => {
       }
 
       // Safe: Transaction valid, not duplicate, let's credit
-      await creditBalance(uid, amountNum, 'deposit', { method: paymentMethod, transactionId: transaction_id });
+      await creditBalance(uid, amountNum, 'deposit', { method: paymentMethod, transactionId: txid });
       
       // Update existing record: Query by userId only (no index needed) and filter in memory
       const depositsSnap = await db.collection('deposits')
@@ -156,7 +158,7 @@ const verifyDeposit = async (req, res, next) => {
       if (pendingDoc) {
         const docRef = pendingDoc.ref;
         await docRef.update({
-          transactionId: transaction_id,
+          transactionId: txid,
           method: paymentMethod,
           amount: amountNum, 
           status: 'approved',
@@ -169,7 +171,7 @@ const verifyDeposit = async (req, res, next) => {
         await depositRef.set({
           userId: uid,
           method: paymentMethod,
-          transactionId: transaction_id,
+          transactionId: txid,
           amount: amountNum,
           status: 'approved',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),

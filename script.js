@@ -17,26 +17,28 @@ let appSettings = { minDeposit: 100, minWithdraw: 500 };
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
 
-  // ── Handle RupantorPay return ──────────────────────────────────────────
+  // ── Handle Payment Gateway return (RupantorPay / Nagad / bKash) ──────────
   const paymentStatus = urlParams.get('payment');
-  const txId = urlParams.get('transaction_id') || urlParams.get('trx_id');
+  const txId = urlParams.get('transactionId') || urlParams.get('transaction_id') || urlParams.get('trx_id');
 
   if (paymentStatus === 'success' && txId && authToken) {
     if (document.getElementById('loader')) document.getElementById('loader').classList.remove('hidden');
     try {
+      console.log('Attempting to verify transaction:', txId);
       const verifyRes = await apiFetch('/deposit/verify', {
         method: 'POST',
         body: JSON.stringify({ transaction_id: txId })
       });
       showToast(verifyRes.message || 'Payment verified! Balance added.', 'success');
       // Refresh balance and history immediately
-      if (typeof loadDashboardData === 'function') loadDashboardData();
-      if (typeof loadDepositHistory === 'function') loadDepositHistory();
+      if (typeof loadDashboardData === 'function') await loadDashboardData();
     } catch (err) {
+      console.error('Verification error:', err);
       if (!err.message.includes('already verified')) {
         showToast(err.message || 'Payment verification failed', 'error');
       }
     }
+    // Clean up URL params after processing
     window.history.replaceState({}, document.title, window.location.pathname);
     if (document.getElementById('loader')) document.getElementById('loader').classList.add('hidden');
   } else if (paymentStatus === 'cancel') {
