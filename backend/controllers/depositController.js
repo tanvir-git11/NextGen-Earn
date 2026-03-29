@@ -115,9 +115,11 @@ const verifyDeposit = async (req, res, next) => {
       result.data?.status === 'SUCCESS' ||
       result.data?.status === 'COMPLETED';
 
+    const paymentMethod = 'rupantorpay';
+
     if (isSuccess) {
       // Find amount (could be result.amount, result.data.amount, or result.received_amount)
-      const rawAmount = result.amount || result.data?.amount || result.received_amount || result.data?.received_amount;
+      const rawAmount = result.amount || result.data?.amount || result.received_amount || result.data?.received_amount || result.pay_amount || result.data?.pay_amount;
       const amountNum = parseFloat(rawAmount);
 
       if (isNaN(amountNum) || amountNum <= 0) {
