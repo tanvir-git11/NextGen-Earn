@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         body: JSON.stringify({ transaction_id: txId })
       });
       showToast(verifyRes.message || 'Payment verified! Balance added.', 'success');
+      // Refresh balance and history immediately
+      if (typeof loadDashboardData === 'function') loadDashboardData();
+      if (typeof loadDepositHistory === 'function') loadDepositHistory();
     } catch (err) {
       if (!err.message.includes('already verified')) {
         showToast(err.message || 'Payment verification failed', 'error');
