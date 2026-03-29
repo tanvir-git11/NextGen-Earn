@@ -4,7 +4,7 @@
    API Base: http://localhost:5500/api
    ========================================== */
 
-const API = 'https://YOUR-RENDER-APP.onrender.com/api'; 
+const API = 'https://nextgen-earn.onrender.com/api'; 
 
 // ===== STATE =====
 let currentPage = 'dashboard';

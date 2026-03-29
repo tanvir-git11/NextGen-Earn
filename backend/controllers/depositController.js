@@ -38,7 +38,7 @@ const checkoutDeposit = async (req, res, next) => {
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
-        'X-CLIENT': 'localhost'
+        'X-CLIENT': 'nextgenearn.shop'
       },
       body: data
     });
@@ -99,14 +99,34 @@ const verifyDeposit = async (req, res, next) => {
     });
     
     const result = await response.json();
+    console.log('[DEBUG] RupantorPay Verify Response:', JSON.stringify(result, null, 2));
     
     // 3. Process success
-    if (result.status === 'COMPLETED') {
-      const amountNum = parseFloat(result.amount);
-      const paymentMethod = result.payment_method || 'rupantorpay';
+    // RupantorPay v2 may return status as boolean (true) or string ('COMPLETED' or 'Success')
+    // and amount might be at top level or inside a 'data' object.
+    const isSuccess = 
+      result.status === true || 
+      result.status === 1 || 
+      result.status === 'COMPLETED' || 
+      result.status === 'Success' ||
+      result.data?.status === 'Success' ||
+      result.data?.status === 'COMPLETED';
+
+    if (isSuccess) {
+      // Find amount (could be result.amount, result.data.amount, or result.received_amount)
+      const rawAmount = result.amount || result.data?.amount || result.received_amount || result.data?.received_amount;
+      const amountNum = parseFloat(rawAmount);
+
+      if (isNaN(amountNum) || amountNum <= 0) {
+        console.error('[verifyDeposit] Invalid amount found in response:', rawAmount);
+        return res.status(400).json({ success: false, message: 'Invalid payment amount received from gateway' });
+      }
+
+      const paymentMethod = result.payment_method || result.data?.payment_method || 'rupantorpay';
       
       // Ensure the transaction belongs to the currently logged in user (security check)
-      if (result.metadata?.uid && result.metadata.uid !== uid) {
+      const metadata = result.metadata || result.data?.metadata;
+      if (metadata?.uid && metadata.uid !== uid) {
         return res.status(403).json({ success: false, message: 'Transaction belongs to another user' });
       }
 
@@ -126,7 +146,11 @@ const verifyDeposit = async (req, res, next) => {
       
       return res.status(200).json({ success: true, message: 'Payment verified successfully. Balance added.', amount: amountNum });
     } else {
-      return res.status(400).json({ success: false, message: 'Payment verification failed or is not completed' });
+      console.error('[verifyDeposit] Verification failed. Response:', result);
+      return res.status(400).json({ 
+        success: false, 
+        message: result.message || result.data?.message || 'Payment verification failed or is not completed' 
+      });
     }
   } catch (err) {
     next(err);
