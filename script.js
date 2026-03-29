@@ -611,6 +611,13 @@ async function upgradeLevel() {
 
 // ===== DEPOSIT TABS =====
 function switchDepositTab(tab) {
+  if (tab === 'auto' && appSettings.isAutoPaymentEnabled === false) {
+    // Show required Bangla popup/alert
+    alert("কিছু যান্ত্রিক ত্রুটির জন্য অটোমেটিক পেমেন্ট বন্ধ আছে। দয়া করে ম্যানুয়ালি পেমেন্ট করুন, ৫ থেকে ১০ মিনিটের ভেতর অ্যাপ্রুভ হবে।");
+    switchDepositTab('manual');
+    return;
+  }
+  
   const autoSec = document.getElementById('deposit-auto-section');
   const manSec = document.getElementById('deposit-manual-section');
   const autoTab = document.getElementById('dep-tab-auto');

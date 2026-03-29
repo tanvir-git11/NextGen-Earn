@@ -35,13 +35,14 @@ const getSettings = async (req, res, next) => {
  */
 const updateSettings = async (req, res, next) => {
   try {
-    const { minDeposit, minWithdraw, bkashNumber, nagadNumber } = req.body;
+    const { minDeposit, minWithdraw, bkashNumber, nagadNumber, isAutoPaymentEnabled } = req.body;
     
     const updates = {};
     if (minDeposit !== undefined) updates.minDeposit = parseFloat(minDeposit);
     if (minWithdraw !== undefined) updates.minWithdraw = parseFloat(minWithdraw);
     if (bkashNumber !== undefined) updates.bkashNumber = String(bkashNumber).trim();
     if (nagadNumber !== undefined) updates.nagadNumber = String(nagadNumber).trim();
+    if (isAutoPaymentEnabled !== undefined) updates.isAutoPaymentEnabled = !!isAutoPaymentEnabled;
     
     updates.updatedAt = new Date().toISOString();
 
